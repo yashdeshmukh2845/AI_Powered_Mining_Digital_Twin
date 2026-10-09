@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, R
 from fastapi.responses import FileResponse, StreamingResponse
 from sqlalchemy.orm import Session
 import pandas as pd
+import joblib
 
 from backend.app.database.db import get_db
 from backend.app.database.models import (

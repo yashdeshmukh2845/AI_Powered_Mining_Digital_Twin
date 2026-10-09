@@ -2,7 +2,6 @@ import os
 import sys
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
@@ -40,4 +39,5 @@ def root():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("backend.app.main:app", host="127.0.0.1", port=8000, reload=True)
+    port = int(os.getenv("PORT", 8080))
+    uvicorn.run("backend.app.main:app", host="127.0.0.1", port=port, reload=True)
