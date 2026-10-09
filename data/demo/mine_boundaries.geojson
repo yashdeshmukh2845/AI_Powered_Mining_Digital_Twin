@@ -1,0 +1,40 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "mine_id": "MINE-001",
+        "name": "Dongri Buzurg Mine Perimeter",
+        "area_sqkm": 8.45
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              79.67150000000001,
+              21.5142
+            ],
+            [
+              79.7115,
+              21.5142
+            ],
+            [
+              79.7115,
+              21.554199999999998
+            ],
+            [
+              79.67150000000001,
+              21.554199999999998
+            ],
+            [
+              79.67150000000001,
+              21.5142
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}

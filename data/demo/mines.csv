@@ -1,0 +1,4 @@
+id,name,code,location,latitude,longitude,elevation,operational_status
+MINE-001,Dongri Buzurg Manganese Mine,DBM-01,"Bhandara District, Maharashtra, India",21.5342,79.6915,320.0,Active
+MINE-002,Mansar Manganese Mine,MSM-02,"Nagpur District, Maharashtra, India",21.3912,79.2568,305.0,Active
+MINE-003,Balaghat Manganese Mine,BGM-03,"Balaghat District, Madhya Pradesh, India",21.8134,80.1843,345.0,Active

@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgis/postgis:15-3.3
+    container_name: moil_postgres
+    environment:
+      POSTGRES_DB: moil_manganese_db
+      POSTGRES_USER: moil_admin
+      POSTGRES_PASSWORD: moil_secure_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U moil_admin -d moil_manganese_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: moil_backend
+    environment:
+      DATABASE_URL: postgresql://moil_admin:moil_secure_password@postgres:5432/moil_manganese_db
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

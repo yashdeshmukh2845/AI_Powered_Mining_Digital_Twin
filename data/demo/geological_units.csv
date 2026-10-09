@@ -1,0 +1,5 @@
+id,mine_id,name,code,description,rock_type,color
+GEO-01,MINE-001,Manganese Ore Belt,MN-ORE,High-grade gondite manganese ore body,Manganese Gondite,#8B5CF6
+GEO-02,MINE-001,Quartzite Footwall,QTZ-FW,Massive pink and white quartzite,Quartzite,#F59E0B
+GEO-03,MINE-001,Mica Schist Hangingwall,SCH-HW,Foliated quartz-muscovite mica schist,Schist,#10B981
+GEO-04,MINE-001,Pegmatite Intrusion,PEG-INT,Coarse-grained pegmatite dyke,Pegmatite,#EC4899

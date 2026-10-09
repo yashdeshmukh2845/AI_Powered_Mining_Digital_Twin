@@ -1,0 +1,69 @@
+id,equipment_id,start_time,end_time,downtime_hours,reason,category
+DT-0001,EQ-06,2025-10-08 08:30:00,2025-10-08 12:00:00,4.0,Engine Overheating,Unplanned Maintenance
+DT-0002,EQ-01,2025-10-14 08:30:00,2025-10-14 12:00:00,4.1,Conveyor Belt Tear,Unplanned Maintenance
+DT-0003,EQ-01,2025-10-27 08:30:00,2025-10-27 15:00:00,7.0,Electrical Sensor Fault,Unplanned Maintenance
+DT-0004,EQ-06,2025-11-01 08:30:00,2025-11-01 13:00:00,4.8,Conveyor Belt Tear,Unplanned Maintenance
+DT-0005,EQ-03,2025-11-09 08:30:00,2025-11-09 15:00:00,6.8,Engine Overheating,Unplanned Maintenance
+DT-0006,EQ-02,2025-11-13 08:30:00,2025-11-13 13:00:00,5.3,Conveyor Belt Tear,Unplanned Maintenance
+DT-0007,EQ-02,2025-11-16 08:30:00,2025-11-16 16:00:00,8.4,Conveyor Belt Tear,Unplanned Maintenance
+DT-0008,EQ-02,2025-11-20 08:30:00,2025-11-20 14:00:00,5.5,Conveyor Belt Tear,Unplanned Maintenance
+DT-0009,EQ-06,2025-11-30 08:30:00,2025-11-30 15:00:00,7.2,Electrical Sensor Fault,Unplanned Maintenance
+DT-0010,EQ-01,2025-12-04 08:30:00,2025-12-04 11:00:00,2.6,Hydraulic Hose Burst,Unplanned Maintenance
+DT-0011,EQ-06,2025-12-05 08:30:00,2025-12-05 11:00:00,2.8,Hydraulic Hose Burst,Unplanned Maintenance
+DT-0012,EQ-06,2025-12-06 08:30:00,2025-12-06 11:00:00,3.0,Track Chain Wear,Unplanned Maintenance
+DT-0013,EQ-05,2025-12-10 08:30:00,2025-12-10 16:00:00,7.8,Hydraulic Hose Burst,Unplanned Maintenance
+DT-0014,EQ-01,2025-12-11 08:30:00,2025-12-11 12:00:00,3.7,Engine Overheating,Unplanned Maintenance
+DT-0015,EQ-05,2025-12-20 08:30:00,2025-12-20 11:00:00,2.6,Electrical Sensor Fault,Unplanned Maintenance
+DT-0016,EQ-04,2026-01-05 08:30:00,2026-01-05 13:00:00,5.3,Hydraulic Hose Burst,Unplanned Maintenance
+DT-0017,EQ-01,2026-01-06 08:30:00,2026-01-06 14:00:00,6.2,Conveyor Belt Tear,Unplanned Maintenance
+DT-0018,EQ-01,2026-01-19 08:30:00,2026-01-19 11:00:00,3.1,Engine Overheating,Unplanned Maintenance
+DT-0019,EQ-01,2026-01-23 08:30:00,2026-01-23 16:00:00,7.8,Hydraulic Hose Burst,Unplanned Maintenance
+DT-0020,EQ-02,2026-01-24 08:30:00,2026-01-24 14:00:00,6.3,Engine Overheating,Unplanned Maintenance
+DT-0021,EQ-02,2026-01-27 08:30:00,2026-01-27 12:00:00,4.0,Engine Overheating,Unplanned Maintenance
+DT-0022,EQ-05,2026-02-07 08:30:00,2026-02-07 16:00:00,7.9,Engine Overheating,Unplanned Maintenance
+DT-0023,EQ-05,2026-02-10 08:30:00,2026-02-10 14:00:00,6.0,Hydraulic Hose Burst,Unplanned Maintenance
+DT-0024,EQ-01,2026-02-11 08:30:00,2026-02-11 14:00:00,5.8,Engine Overheating,Unplanned Maintenance
+DT-0025,EQ-05,2026-02-25 08:30:00,2026-02-25 16:00:00,7.7,Electrical Sensor Fault,Unplanned Maintenance
+DT-0026,EQ-02,2026-02-26 08:30:00,2026-02-26 17:00:00,8.6,Track Chain Wear,Unplanned Maintenance
+DT-0027,EQ-06,2026-03-03 08:30:00,2026-03-03 11:00:00,3.1,Track Chain Wear,Unplanned Maintenance
+DT-0028,EQ-06,2026-03-04 08:30:00,2026-03-04 15:00:00,6.5,Conveyor Belt Tear,Unplanned Maintenance
+DT-0029,EQ-06,2026-03-13 08:30:00,2026-03-13 14:00:00,6.0,Engine Overheating,Unplanned Maintenance
+DT-0030,EQ-05,2026-03-17 08:30:00,2026-03-17 13:00:00,5.4,Hydraulic Hose Burst,Unplanned Maintenance
+DT-0031,EQ-04,2026-03-20 08:30:00,2026-03-20 13:00:00,5.4,Engine Overheating,Unplanned Maintenance
+DT-0032,EQ-02,2026-03-26 08:30:00,2026-03-26 16:00:00,8.1,Hydraulic Hose Burst,Unplanned Maintenance
+DT-0033,EQ-04,2026-04-05 08:30:00,2026-04-05 12:00:00,4.4,Electrical Sensor Fault,Unplanned Maintenance
+DT-0034,EQ-05,2026-04-07 08:30:00,2026-04-07 12:00:00,3.9,Hydraulic Hose Burst,Unplanned Maintenance
+DT-0035,EQ-03,2026-04-10 08:30:00,2026-04-10 13:00:00,4.7,Engine Overheating,Unplanned Maintenance
+DT-0036,EQ-07,2026-04-22 08:30:00,2026-04-22 14:00:00,5.9,Engine Overheating,Unplanned Maintenance
+DT-0037,EQ-07,2026-04-27 08:30:00,2026-04-27 12:00:00,3.5,Conveyor Belt Tear,Unplanned Maintenance
+DT-0038,EQ-01,2026-05-03 08:30:00,2026-05-03 15:00:00,7.0,Hydraulic Hose Burst,Unplanned Maintenance
+DT-0039,EQ-07,2026-05-08 08:30:00,2026-05-08 12:00:00,3.8,Engine Overheating,Unplanned Maintenance
+DT-0040,EQ-07,2026-05-14 08:30:00,2026-05-14 12:00:00,4.2,Hydraulic Hose Burst,Unplanned Maintenance
+DT-0041,EQ-02,2026-05-17 08:30:00,2026-05-17 11:00:00,3.3,Track Chain Wear,Unplanned Maintenance
+DT-0042,EQ-06,2026-05-27 08:30:00,2026-05-27 12:00:00,4.2,Hydraulic Hose Burst,Unplanned Maintenance
+DT-0043,EQ-04,2026-05-28 08:30:00,2026-05-28 11:00:00,3.0,Track Chain Wear,Unplanned Maintenance
+DT-0044,EQ-03,2026-05-31 08:30:00,2026-05-31 17:00:00,8.8,Conveyor Belt Tear,Unplanned Maintenance
+DT-0045,EQ-03,2026-06-08 08:30:00,2026-06-08 16:00:00,8.3,Track Chain Wear,Unplanned Maintenance
+DT-0046,EQ-02,2026-06-09 08:30:00,2026-06-09 14:00:00,5.5,Electrical Sensor Fault,Unplanned Maintenance
+DT-0047,EQ-02,2026-06-10 08:30:00,2026-06-10 15:00:00,6.7,Engine Overheating,Unplanned Maintenance
+DT-0048,EQ-07,2026-06-15 08:30:00,2026-06-15 11:00:00,2.8,Hydraulic Hose Burst,Unplanned Maintenance
+DT-0049,EQ-03,2026-06-19 08:30:00,2026-06-19 11:00:00,2.7,Engine Overheating,Unplanned Maintenance
+DT-0050,EQ-01,2026-06-22 08:30:00,2026-06-22 15:00:00,7.1,Engine Overheating,Unplanned Maintenance
+DT-0051,EQ-01,2026-07-11 08:30:00,2026-07-11 16:00:00,8.0,Electrical Sensor Fault,Unplanned Maintenance
+DT-0052,EQ-04,2026-07-23 08:30:00,2026-07-23 11:00:00,2.8,Conveyor Belt Tear,Unplanned Maintenance
+DT-0053,EQ-01,2026-07-25 08:30:00,2026-07-25 15:00:00,6.6,Track Chain Wear,Unplanned Maintenance
+DT-0054,EQ-03,2026-07-27 08:30:00,2026-07-27 12:00:00,3.5,Conveyor Belt Tear,Unplanned Maintenance
+DT-0055,EQ-07,2026-07-30 08:30:00,2026-07-30 14:00:00,6.3,Hydraulic Hose Burst,Unplanned Maintenance
+DT-0056,EQ-03,2026-07-31 08:30:00,2026-07-31 14:00:00,6.1,Electrical Sensor Fault,Unplanned Maintenance
+DT-0057,EQ-05,2026-08-02 08:30:00,2026-08-02 17:00:00,8.6,Track Chain Wear,Unplanned Maintenance
+DT-0058,EQ-03,2026-08-04 08:30:00,2026-08-04 16:00:00,7.8,Electrical Sensor Fault,Unplanned Maintenance
+DT-0059,EQ-07,2026-08-05 08:30:00,2026-08-05 17:00:00,8.6,Conveyor Belt Tear,Unplanned Maintenance
+DT-0060,EQ-01,2026-08-17 08:30:00,2026-08-17 14:00:00,6.1,Electrical Sensor Fault,Unplanned Maintenance
+DT-0061,EQ-06,2026-08-18 08:30:00,2026-08-18 14:00:00,5.6,Conveyor Belt Tear,Unplanned Maintenance
+DT-0062,EQ-04,2026-08-25 08:30:00,2026-08-25 11:00:00,2.7,Engine Overheating,Unplanned Maintenance
+DT-0063,EQ-05,2026-08-29 08:30:00,2026-08-29 11:00:00,2.9,Electrical Sensor Fault,Unplanned Maintenance
+DT-0064,EQ-01,2026-09-02 08:30:00,2026-09-02 11:00:00,3.4,Hydraulic Hose Burst,Unplanned Maintenance
+DT-0065,EQ-04,2026-09-13 08:30:00,2026-09-13 14:00:00,6.2,Track Chain Wear,Unplanned Maintenance
+DT-0066,EQ-01,2026-09-15 08:30:00,2026-09-15 12:00:00,4.4,Track Chain Wear,Unplanned Maintenance
+DT-0067,EQ-05,2026-09-29 08:30:00,2026-09-29 11:00:00,2.9,Electrical Sensor Fault,Unplanned Maintenance
+DT-0068,EQ-03,2026-09-30 08:30:00,2026-09-30 13:00:00,5.3,Conveyor Belt Tear,Unplanned Maintenance
