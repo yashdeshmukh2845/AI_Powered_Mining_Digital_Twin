@@ -1,0 +1,35 @@
+cff-version: 1.2.0
+title: Orebit Synthetic Drillhole Datasets
+message: >-
+  If you use these datasets, please cite them as below.
+type: dataset
+authors:
+  - given-names: Ghozian Islam
+    family-names: Karami
+    affiliation: Orebit.id
+repository-code: 'https://github.com/ghoziankarami/orebit-datasets'
+abstract: >-
+  Three fully synthetic drillhole datasets covering the deposit
+  styles most relevant to Indonesian mineral exploration:
+  low-sulphidation epithermal gold, nickel laterite, and alluvial
+  tin placer. Generated from geological models rather than
+  collected from any real deposit, so they carry no third-party
+  rights and can be redistributed, taught from, and bundled into
+  software without a licence review. Each dataset uses an
+  identical four-file layout (collar, survey, assay, litho) but a
+  deliberately different statistical character, making the set
+  useful for testing whether one workflow generalises across
+  deposit styles.
+keywords:
+  - drillhole data
+  - resource estimation
+  - geostatistics
+  - synthetic dataset
+  - epithermal gold
+  - nickel laterite
+  - alluvial tin
+  - Indonesia
+  - open data
+license: CC-BY-4.0
+version: 1.0.0
+date-released: '2026-08-29'

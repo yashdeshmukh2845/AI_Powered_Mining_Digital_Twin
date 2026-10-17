@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   LayoutDashboard, MapPin, Layers, TrendingUp, AlertTriangle,
-  Zap, Cpu, Database, BarChart3, FileText, Pickaxe
+  Zap, Cpu, Database, BarChart3, FileText, Pickaxe, Globe
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -12,6 +12,7 @@ interface SidebarProps {
 export const navItems = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
   { id: 'map', label: 'Mine Map', icon: MapPin },
+  { id: 'satellite', label: 'Satellite Intelligence', icon: Globe },
   { id: 'reserves', label: 'Reserve Intelligence', icon: Layers },
   { id: 'forecast', label: 'Production Forecast', icon: TrendingUp },
   { id: 'risk', label: 'Risk Center', icon: AlertTriangle },

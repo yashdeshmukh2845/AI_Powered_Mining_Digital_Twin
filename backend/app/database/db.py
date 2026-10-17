@@ -20,6 +20,96 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
 
+def ensure_schema_migrations():
+    """Ensures newly added columns exist in SQLite database without losing data."""
+    if not DATABASE_URL.startswith("sqlite"):
+        return
+    from sqlalchemy import text
+    with engine.connect() as conn:
+        # Check production_records
+        try:
+            res = conn.execute(text("PRAGMA table_info(production_records)"))
+            existing_cols = {row[1] for row in res.fetchall()}
+            prod_additions = [
+                ("shift", "TEXT"),
+                ("equipment_id", "TEXT"),
+                ("manpower", "INTEGER"),
+                ("energy_consumption_kwh", "REAL"),
+                ("production_efficiency_pct", "REAL"),
+                ("is_synthetic", "BOOLEAN DEFAULT 0"),
+                ("provenance_source", "TEXT DEFAULT 'imported'")
+            ]
+            for col_name, col_type in prod_additions:
+                if col_name not in existing_cols:
+                    conn.execute(text(f"ALTER TABLE production_records ADD COLUMN {col_name} {col_type}"))
+                    conn.commit()
+        except Exception:
+            pass
+
+        # Check boreholes
+        try:
+            res = conn.execute(text("PRAGMA table_info(boreholes)"))
+            existing_cols = {row[1] for row in res.fetchall()}
+            bh_additions = [
+                ("x_coord", "REAL"),
+                ("y_coord", "REAL"),
+                ("crs", "TEXT DEFAULT 'UTM'"),
+                ("commodity", "TEXT DEFAULT 'Nickel Laterite'"),
+                ("is_synthetic", "BOOLEAN DEFAULT 0"),
+                ("provenance_source", "TEXT DEFAULT 'orebit-datasets'")
+            ]
+            for col_name, col_type in bh_additions:
+                if col_name not in existing_cols:
+                    conn.execute(text(f"ALTER TABLE boreholes ADD COLUMN {col_name} {col_type}"))
+                    conn.commit()
+        except Exception:
+            pass
+
+        # Check borehole_intervals
+        try:
+            res = conn.execute(text("PRAGMA table_info(borehole_intervals)"))
+            existing_cols = {row[1] for row in res.fetchall()}
+            bi_additions = [
+                ("primary_grade", "REAL DEFAULT 0.0"),
+                ("primary_commodity", "TEXT DEFAULT 'Ni'"),
+                ("secondary_grade", "REAL DEFAULT 0.0"),
+                ("secondary_commodity", "TEXT DEFAULT 'Fe'")
+            ]
+            for col_name, col_type in bi_additions:
+                if col_name not in existing_cols:
+                    conn.execute(text(f"ALTER TABLE borehole_intervals ADD COLUMN {col_name} {col_type}"))
+                    conn.commit()
+        except Exception:
+            pass
+
+        # Check assay_samples
+        try:
+            res = conn.execute(text("PRAGMA table_info(assay_samples)"))
+            existing_cols = {row[1] for row in res.fetchall()}
+            ass_additions = [
+                ("primary_grade", "REAL DEFAULT 0.0"),
+                ("primary_element", "TEXT DEFAULT 'Ni'"),
+                ("specific_gravity", "REAL DEFAULT 1.6"),
+                ("commodity", "TEXT DEFAULT 'Nickel Laterite'"),
+                ("provenance_source", "TEXT DEFAULT 'orebit-datasets'")
+            ]
+            for col_name, col_type in ass_additions:
+                if col_name not in existing_cols:
+                    conn.execute(text(f"ALTER TABLE assay_samples ADD COLUMN {col_name} {col_type}"))
+                    conn.commit()
+        except Exception:
+            pass
+
+        # Check ore_blocks
+        try:
+            res = conn.execute(text("PRAGMA table_info(ore_blocks)"))
+            existing_cols = {row[1] for row in res.fetchall()}
+            if "is_synthetic" not in existing_cols:
+                conn.execute(text("ALTER TABLE ore_blocks ADD COLUMN is_synthetic BOOLEAN DEFAULT 0"))
+                conn.commit()
+        except Exception:
+            pass
+
 def get_db():
     db = SessionLocal()
     try:

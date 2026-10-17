@@ -89,6 +89,20 @@ export const api = {
   importData: (formData: FormData) =>
     fetchJson<any>('/data/import', { method: 'POST', body: formData }),
   getImportHistory: () => fetchJson<DataImportRecord[]>('/data/import-history'),
+  getDataProvenance: () => fetchJson<any[]>('/data/provenance'),
+  getDatasetInventory: () => fetchJson<any[]>('/data/inventory'),
+  refreshDatasets: () => fetchJson<any>('/data/refresh', { method: 'POST' }),
+
+  // Weather & Geological Datasets
+  getMonthlyProduction: () => fetchJson<any[]>('/production/monthly'),
+  getWeatherHistory: (limit = 180) => fetchJson<any[]>(`/weather/history?limit=${limit}`),
+  getWeatherStation: () => fetchJson<any>('/weather/station'),
+  getGeologySummary: () => fetchJson<any>('/geology/summary'),
+  getSatelliteSummary: () => fetchJson<any>('/satellite/summary'),
+  getSatelliteSamples: (limit = 40) => fetchJson<any[]>(`/satellite/samples?limit=${limit}`),
+  classifySatelliteImage: (className: string, imageName: string) =>
+    fetchJson<any>(`/satellite/classify?class_name=${className}&image_name=${imageName}`, { method: 'POST' }),
+
   trainProspectivityModel: (algorithm = 'RandomForest') =>
     fetchJson<any>('/models/prospectivity/train', {
       method: 'POST',

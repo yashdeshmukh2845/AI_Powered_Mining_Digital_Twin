@@ -6,9 +6,10 @@ from fastapi.middleware.cors import CORSMiddleware
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 from backend.app.api.routes import router
-from backend.app.database.db import engine, Base
+from backend.app.database.db import engine, Base, ensure_schema_migrations
 
 Base.metadata.create_all(bind=engine)
+ensure_schema_migrations()
 
 app = FastAPI(
     title="MOIL Manganese Intelligence — AI-Powered Mining Digital Twin",

@@ -103,3 +103,41 @@ class SimulationScenarioSave(BaseModel):
 class RecommendationActionRequest(BaseModel):
     action: str  # 'Approve', 'Reject', 'Implement'
     comments: Optional[str] = None
+
+class DataProvenanceSchema(BaseModel):
+    id: Optional[int] = None
+    dataset_key: str
+    file_name: str
+    dataset_type: str
+    commodity: str
+    units: str
+    data_origin: str
+    total_rows: int
+    accepted_rows: int
+    rejected_rows: int
+    validation_warnings: List[str] = []
+    date_range: Optional[str] = None
+    spatial_info: Optional[str] = None
+    is_synthetic: bool = False
+    status: str = "Ready"
+    imported_at: Optional[str] = None
+
+class WeatherRecordSchema(BaseModel):
+    date: str
+    station_latitude: float
+    station_longitude: float
+    elevation_m: float
+    temperature_mean_c: float
+    temperature_max_c: float
+    temperature_min_c: float
+    precipitation_sum_mm: float
+    provenance_source: str = "open-meteo"
+
+class SatellitePreviewItem(BaseModel):
+    id: str
+    file_name: str
+    class_label: str
+    predicted_label: Optional[str] = None
+    confidence: Optional[float] = None
+    source_dataset: str = "EuroSAT_RGB"
+    image_url: Optional[str] = None

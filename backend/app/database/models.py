@@ -41,6 +41,12 @@ class Borehole(Base):
     longitude = Column(Float, nullable=False)
     elevation = Column(Float, nullable=False)
     total_depth = Column(Float, nullable=False)
+    x_coord = Column(Float, nullable=True)
+    y_coord = Column(Float, nullable=True)
+    crs = Column(String, default="UTM")
+    commodity = Column(String, default="Nickel Laterite")
+    is_synthetic = Column(Boolean, default=False)
+    provenance_source = Column(String, default="orebit-datasets")
     start_date = Column(String)
     end_date = Column(String)
 
@@ -52,15 +58,24 @@ class BoreholeInterval(Base):
     to_depth = Column(Float, nullable=False)
     lithology = Column(String)
     mn_grade = Column(Float, default=0.0)
+    primary_grade = Column(Float, default=0.0)
+    primary_commodity = Column(String, default="Ni")
+    secondary_grade = Column(Float, default=0.0)
+    secondary_commodity = Column(String, default="Fe")
 
 class AssaySample(Base):
     __tablename__ = "assay_samples"
     id = Column(String, primary_key=True, index=True)
     interval_id = Column(String, ForeignKey("borehole_intervals.id"), index=True)
     sample_id = Column(String, index=True)
-    mn_grade = Column(Float, nullable=False)
+    mn_grade = Column(Float, nullable=False, default=0.0)
     fe_grade = Column(Float, default=0.0)
     sio2_grade = Column(Float, default=0.0)
+    primary_grade = Column(Float, default=0.0)
+    primary_element = Column(String, default="Ni")
+    specific_gravity = Column(Float, default=1.6)
+    commodity = Column(String, default="Nickel Laterite")
+    provenance_source = Column(String, default="orebit-datasets")
     sample_date = Column(String)
     assay_source = Column(String)
 
@@ -81,6 +96,7 @@ class OreBlock(Base):
     est_mn_grade = Column(Float, nullable=False)
     contained_mn_tonnes = Column(Float, nullable=False)
     category = Column(String, default="Indicated")
+    is_synthetic = Column(Boolean, default=False)
 
 class ProductionRecord(Base):
     __tablename__ = "production_records"
@@ -94,6 +110,13 @@ class ProductionRecord(Base):
     equipment_availability_pct = Column(Float, default=90.0)
     rainfall_mm = Column(Float, default=0.0)
     blasting_delay_hours = Column(Float, default=0.0)
+    shift = Column(String, nullable=True)
+    equipment_id = Column(String, nullable=True)
+    manpower = Column(Integer, nullable=True)
+    energy_consumption_kwh = Column(Float, nullable=True)
+    production_efficiency_pct = Column(Float, nullable=True)
+    is_synthetic = Column(Boolean, default=False)
+    provenance_source = Column(String, default="imported")
 
 class ProductionTarget(Base):
     __tablename__ = "production_targets"
@@ -143,6 +166,53 @@ class EnvironmentalObservation(Base):
     ndvi = Column(Float, default=0.5)
     land_surface_temp_c = Column(Float, default=32.0)
     sar_coherence = Column(Float, default=0.7)
+
+class WeatherObservation(Base):
+    __tablename__ = "weather_observations"
+    id = Column(String, primary_key=True, index=True)
+    date = Column(String, index=True)
+    station_latitude = Column(Float, default=21.195078)
+    station_longitude = Column(Float, default=79.104780)
+    elevation_m = Column(Float, default=293.0)
+    temperature_mean_c = Column(Float, nullable=False)
+    temperature_max_c = Column(Float, nullable=False)
+    temperature_min_c = Column(Float, nullable=False)
+    precipitation_sum_mm = Column(Float, nullable=False)
+    provenance_source = Column(String, default="open-meteo-21.20N79.10E293m.csv")
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+class SatelliteImageRecord(Base):
+    __tablename__ = "satellite_images"
+    id = Column(String, primary_key=True, index=True)
+    file_name = Column(String, nullable=False)
+    relative_path = Column(String, nullable=False)
+    class_label = Column(String, nullable=False)
+    predicted_label = Column(String)
+    confidence = Column(Float)
+    width = Column(Integer, default=64)
+    height = Column(Integer, default=64)
+    source_dataset = Column(String, default="EuroSAT_RGB")
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+class DataProvenance(Base):
+    __tablename__ = "data_provenance"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    dataset_key = Column(String, unique=True, index=True, nullable=False)
+    file_name = Column(String, nullable=False)
+    file_path = Column(String, nullable=False)
+    dataset_type = Column(String, nullable=False) # 'production', 'weather', 'geology_orebit', 'satellite_eurosat'
+    commodity = Column(String, nullable=False)
+    units = Column(String, nullable=False)
+    data_origin = Column(String, default="imported") # 'imported', 'synthetic', 'derived'
+    total_rows = Column(Integer, default=0)
+    accepted_rows = Column(Integer, default=0)
+    rejected_rows = Column(Integer, default=0)
+    validation_warnings = Column(Text, default="[]")
+    date_range = Column(String)
+    spatial_info = Column(String)
+    is_synthetic = Column(Boolean, default=False)
+    status = Column(String, default="Ready")
+    imported_at = Column(DateTime, default=datetime.datetime.utcnow)
 
 class DataImport(Base):
     __tablename__ = "data_imports"

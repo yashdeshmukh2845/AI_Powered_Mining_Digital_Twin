@@ -14,6 +14,10 @@ export interface BoreholeInterval {
   to_depth: number;
   lithology: string;
   mn_grade: number;
+  primary_grade?: number;
+  primary_commodity?: string;
+  secondary_grade?: number;
+  secondary_commodity?: string;
 }
 
 export interface Borehole {
@@ -23,6 +27,12 @@ export interface Borehole {
   longitude: number;
   elevation: number;
   total_depth: number;
+  x_coord?: number;
+  y_coord?: number;
+  crs?: string;
+  commodity?: string;
+  is_synthetic?: boolean;
+  provenance_source?: string;
   intervals?: BoreholeInterval[];
 }
 
@@ -55,6 +65,15 @@ export interface DashboardSummary {
   shortfall_risk_category: string;
   equipment_availability_pct: number;
   num_high_prospectivity_blocks: number;
+  production_attainment_pct?: number;
+  total_production_records?: number;
+  weather_coverage_days?: number;
+  total_boreholes?: number;
+  total_intervals?: number;
+  total_assays?: number;
+  geology_commodity?: string;
+  weather_station_info?: string;
+  provenance_warnings?: string[];
   demo_mode: boolean;
   last_updated: string;
 }
@@ -182,4 +201,95 @@ export interface DataImportRecord {
   imported_rows: number;
   rejected_rows: number;
   timestamp: string;
+}
+
+export interface DataProvenanceRecord {
+  id: number;
+  dataset_key: string;
+  file_name: string;
+  file_path: string;
+  dataset_type: string;
+  commodity: string;
+  units: string;
+  data_origin: string;
+  total_rows: number;
+  accepted_rows: number;
+  rejected_rows: number;
+  validation_warnings: string[];
+  date_range?: string;
+  spatial_info?: string;
+  is_synthetic: boolean;
+  status: string;
+  imported_at?: string;
+}
+
+export interface DiscoveredDataset {
+  dataset_key: string;
+  file_name: string;
+  relative_path: string;
+  file_size_kb: number;
+  dataset_type: string;
+  commodity: string;
+  units: string;
+  data_origin: string;
+  is_primary: boolean;
+  is_synthetic: boolean;
+  columns?: string[];
+  expected_rows?: number;
+  date_coverage?: string;
+  description: string;
+}
+
+export interface WeatherStation {
+  station_name: string;
+  latitude: number;
+  longitude: number;
+  elevation_m: number;
+  timezone: string;
+  observation_period: string;
+  total_observations: number;
+  disclaimer: string;
+}
+
+export interface SatelliteSummary {
+  dataset_name: string;
+  total_images: number;
+  tile_resolution: string;
+  classes: string[];
+  num_classes: number;
+  preview_samples_stored: number;
+  sensor: string;
+  scientific_disclaimer: string;
+}
+
+export interface SatelliteSample {
+  id: string;
+  file_name: string;
+  relative_path: string;
+  class_label: string;
+  predicted_label?: string;
+  confidence?: number;
+  source_dataset: string;
+  image_url: string;
+}
+
+export interface MonthlyProductionRecord {
+  Date: string;
+  Production_Tonnes: number;
+  Target_Tonnes: number;
+  Average_Efficiency: number;
+  'Attainment_%': number;
+}
+
+export interface GeologySummary {
+  borehole_count: number;
+  interval_count: number;
+  assay_count: number;
+  commodity: string;
+  primary_element: string;
+  units: string;
+  average_grade: number;
+  coordinate_reference_system: string;
+  source: string;
+  scientific_disclaimer: string;
 }

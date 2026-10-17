@@ -1,0 +1,36 @@
+name: Dataset validation
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: _generator/requirements.txt
+      - run: python -m pip install -r _generator/requirements.txt
+      - name: Validate committed CSV integrity
+        run: python _generator/validate.py
+      - name: Validate reference statistics used by the documentation
+        run: python _generator/check_readme.py
+      - name: Prove invalid datasets fail the CLI
+        run: python -m unittest discover -s tests -v
+      - name: Package validated CSVs with provenance and checksums
+        run: python _generator/package_snapshot.py --source-ref "$GITHUB_SHA"
+      - name: Keep complete teaching-data snapshot
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: orebit-datasets-${{ github.sha }}
+          path: artifacts/*
+          if-no-files-found: error

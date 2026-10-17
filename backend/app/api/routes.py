@@ -2,7 +2,7 @@ import os
 import json
 import shutil
 import tempfile
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, Response
 from fastapi.responses import FileResponse, StreamingResponse
@@ -14,16 +14,19 @@ from backend.app.database.db import get_db
 from backend.app.database.models import (
     Mine, MineBoundary, GeologicalUnit, Borehole, BoreholeInterval,
     AssaySample, OreBlock, ProductionRecord, Equipment, EnvironmentalObservation,
+    WeatherObservation, SatelliteImageRecord, DataProvenance,
     DataImport, ModelVersion, Forecast, RiskAssessment, Recommendation,
     RecommendationFeedback, SimulationScenario
 )
 from backend.app.schemas.pydantic_schemas import (
     HealthCheck, DashboardSummary, MineSchema, ReserveEstimateRequest,
     ProspectivityTrainRequest, ProductionTrainRequest, ProductionForecastRequest,
-    RiskAnalysisRequest, SimulationRequest, SimulationScenarioSave, RecommendationActionRequest
+    RiskAnalysisRequest, SimulationRequest, SimulationScenarioSave, RecommendationActionRequest,
+    DataProvenanceSchema, WeatherRecordSchema, SatellitePreviewItem
 )
 from backend.app.ml.prospectivity_model import ProspectivityModel
 from backend.app.ml.production_model import ProductionModel
+from backend.app.ml.eurosat_classifier import EuroSATClassifier
 from backend.app.ml.explainability import ExplainabilityEngine
 from backend.app.services.reserve_service import ReserveService
 from backend.app.services.recommendation_service import RecommendationService
@@ -32,8 +35,9 @@ from backend.app.services.ingestion_service import IngestionService
 from backend.app.services.report_service import ReportService
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-DATA_DEMO_DIR = os.path.join(BASE_DIR, 'data', 'demo')
-DATA_TEMPLATE_DIR = os.path.join(BASE_DIR, 'data', 'templates')
+DATA_DIR = os.path.join(BASE_DIR, 'data')
+DATA_DEMO_DIR = os.path.join(DATA_DIR, 'demo')
+DATA_TEMPLATE_DIR = os.path.join(DATA_DIR, 'templates')
 MODEL_DIR = os.path.join(BASE_DIR, 'models')
 REPORTS_DIR = os.path.join(BASE_DIR, 'reports')
 os.makedirs(REPORTS_DIR, exist_ok=True)
@@ -42,16 +46,18 @@ router = APIRouter(prefix="/api")
 
 # 1. Health
 @router.get("/health", response_model=HealthCheck)
-def health_check():
+def health_check(db: Session = Depends(get_db)):
+    # Check if imported production data exists
+    has_imported = db.query(ProductionRecord).filter(ProductionRecord.is_synthetic == False).first() is not None
     return HealthCheck(
         status="healthy",
         app="MOIL Manganese Intelligence — AI-Powered Mining Digital Twin",
-        version="1.0.0",
-        demo_mode=True
+        version="2.1.0",
+        demo_mode=not has_imported
     )
 
 # 2. Dashboard Summary
-@router.get("/dashboard/summary", response_model=DashboardSummary)
+@router.get("/dashboard/summary")
 def get_dashboard_summary(mine_id: str = "MINE-001", db: Session = Depends(get_db)):
     mine = db.query(Mine).filter(Mine.id == mine_id).first()
     if not mine:
@@ -62,12 +68,33 @@ def get_dashboard_summary(mine_id: str = "MINE-001", db: Session = Depends(get_d
     est_contained_mn = sum(b.contained_mn_tonnes for b in blocks) if blocks else 2150000.0
     avg_grade = round((est_contained_mn / est_resources * 100.0), 2) if est_resources > 0 else 34.4
     
-    # Latest production
-    latest_prod = db.query(ProductionRecord).filter(ProductionRecord.mine_id == mine_id).order_by(ProductionRecord.date.desc()).first()
+    # Production statistics from database
+    total_prod_records = db.query(ProductionRecord).count()
+    imported_records = db.query(ProductionRecord).filter(ProductionRecord.is_synthetic == False).count()
+    is_demo = (imported_records == 0)
+    
+    latest_prod = db.query(ProductionRecord).order_by(ProductionRecord.date.desc()).first()
     actual_prod = latest_prod.actual_production_tonnes if latest_prod else 2350.0
     target_prod = latest_prod.planned_target_tonnes if latest_prod else 2500.0
     
-    # Forecast
+    # Target attainment calculation
+    all_prod = db.query(ProductionRecord).all()
+    if all_prod:
+        sum_actual = sum(p.actual_production_tonnes for p in all_prod)
+        sum_target = sum(p.planned_target_tonnes for p in all_prod)
+        attainment_pct = round((sum_actual / sum_target * 100.0), 2) if sum_target > 0 else 94.5
+    else:
+        attainment_pct = 94.5
+        
+    # Weather coverage
+    weather_count = db.query(WeatherObservation).count()
+    
+    # Geological exploration totals
+    total_boreholes = db.query(Borehole).count()
+    total_intervals = db.query(BoreholeInterval).count()
+    total_assays = db.query(AssaySample).count()
+    
+    # Forecast using trained production model
     prod_model = ProductionModel()
     if latest_prod:
         input_df = pd.DataFrame([{
@@ -75,51 +102,69 @@ def get_dashboard_summary(mine_id: str = "MINE-001", db: Session = Depends(get_d
             'downtime_hours': latest_prod.downtime_hours,
             'equipment_availability_pct': latest_prod.equipment_availability_pct,
             'rainfall_mm': latest_prod.rainfall_mm,
-            'blasting_delay_hours': latest_prod.blasting_delay_hours
+            'blasting_delay_hours': latest_prod.blasting_delay_hours,
+            'manpower': latest_prod.manpower if latest_prod.manpower else 25,
+            'energy_consumption_kwh': latest_prod.energy_consumption_kwh if latest_prod.energy_consumption_kwh else 2500.0
         }])
         forecast_val = float(prod_model.predict(input_df)[0])
     else:
         forecast_val = 2280.0
         
     shortfall = ProductionModel.calculate_shortfall_risk(target_prod, forecast_val)
-    
-    # Equipment availability
     latest_avail = latest_prod.equipment_availability_pct if latest_prod else 91.2
     
-    # High prospectivity blocks count
+    # High prospectivity blocks
     prospectivity_path = os.path.join(DATA_DEMO_DIR, 'prospectivity_grid.geojson')
     high_blocks_cnt = 42
     if os.path.exists(prospectivity_path):
-        with open(prospectivity_path, 'r') as f:
-            pdata = json.load(f)
-            high_blocks_cnt = sum(1 for feat in pdata['features'] if feat['properties'].get('prospectivity_category') == 'High')
+        try:
+            with open(prospectivity_path, 'r') as f:
+                pdata = json.load(f)
+                high_blocks_cnt = sum(1 for feat in pdata['features'] if feat['properties'].get('prospectivity_category') == 'High')
+        except Exception:
+            pass
             
-    return DashboardSummary(
-        selected_mine=MineSchema(
-            id=mine.id, name=mine.name, code=mine.code, location=mine.location,
-            latitude=mine.latitude, longitude=mine.longitude, elevation=mine.elevation,
-            operational_status=mine.operational_status
-        ),
-        est_resources_tonnes=round(est_resources, 1),
-        est_contained_mn_tonnes=round(est_contained_mn, 1),
-        avg_mn_grade_pct=avg_grade,
-        latest_actual_production=actual_prod,
-        latest_target_production=target_prod,
-        forecast_production=forecast_val,
-        forecast_shortfall_tonnes=shortfall["shortfall_tonnes"],
-        forecast_shortfall_pct=shortfall["shortfall_pct"],
-        shortfall_risk_category=shortfall["risk_category"],
-        equipment_availability_pct=latest_avail,
-        num_high_prospectivity_blocks=high_blocks_cnt,
-        demo_mode=True,
-        last_updated=datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
-    )
+    # Provenance warnings summary
+    provenance_warnings = [
+        "Production & Weather KPIs driven by imported local datasets (5,000 shift records + 2,192 weather days).",
+        "Geological drillholes represent Orebit Nickel Laterite benchmark exploration data; genuine manganese assay data required for MOIL reserve classification.",
+        "EuroSAT optical RGB images demonstrate surface land cover and do not independently detect underground manganese."
+    ]
+
+    return {
+        "selected_mine": {
+            "id": mine.id, "name": mine.name, "code": mine.code, "location": mine.location,
+            "latitude": mine.latitude, "longitude": mine.longitude, "elevation": mine.elevation,
+            "operational_status": mine.operational_status
+        },
+        "est_resources_tonnes": round(est_resources, 1),
+        "est_contained_mn_tonnes": round(est_contained_mn, 1),
+        "avg_mn_grade_pct": avg_grade,
+        "latest_actual_production": round(actual_prod, 1),
+        "latest_target_production": round(target_prod, 1),
+        "production_attainment_pct": attainment_pct,
+        "forecast_production": round(forecast_val, 1),
+        "forecast_shortfall_tonnes": shortfall["shortfall_tonnes"],
+        "forecast_shortfall_pct": shortfall["shortfall_pct"],
+        "shortfall_risk_category": shortfall["risk_category"],
+        "equipment_availability_pct": latest_avail,
+        "num_high_prospectivity_blocks": high_blocks_cnt,
+        "total_production_records": total_prod_records,
+        "weather_coverage_days": weather_count,
+        "total_boreholes": total_boreholes,
+        "total_intervals": total_intervals,
+        "total_assays": total_assays,
+        "geology_commodity": "Nickel Laterite (% Ni, Orebit Exploration Benchmark)",
+        "weather_station_info": "21.1951°N, 79.1048°E (Elev: 293m, 2020-2025 Central India Grid)",
+        "demo_mode": is_demo,
+        "provenance_warnings": provenance_warnings,
+        "last_updated": datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
+    }
 
 # 3. Mines
 @router.get("/mines")
 def list_mines(db: Session = Depends(get_db)):
-    mines = db.query(Mine).all()
-    return mines
+    return db.query(Mine).all()
 
 @router.get("/mines/{mine_id}")
 def get_mine(mine_id: str, db: Session = Depends(get_db)):
@@ -131,8 +176,7 @@ def get_mine(mine_id: str, db: Session = Depends(get_db)):
 # 4. Ore Blocks & Boreholes
 @router.get("/blocks")
 def list_blocks(mine_id: str = "MINE-001", db: Session = Depends(get_db)):
-    blocks = db.query(OreBlock).filter(OreBlock.mine_id == mine_id).all()
-    return blocks
+    return db.query(OreBlock).filter(OreBlock.mine_id == mine_id).all()
 
 @router.get("/boreholes")
 def list_boreholes(mine_id: str = "MINE-001", db: Session = Depends(get_db)):
@@ -146,7 +190,11 @@ def list_boreholes(mine_id: str = "MINE-001", db: Session = Depends(get_db)):
                 "from_depth": i.from_depth,
                 "to_depth": i.to_depth,
                 "lithology": i.lithology,
-                "mn_grade": i.mn_grade
+                "mn_grade": i.mn_grade,
+                "primary_grade": i.primary_grade,
+                "primary_commodity": i.primary_commodity,
+                "secondary_grade": i.secondary_grade,
+                "secondary_commodity": i.secondary_commodity
             })
         result.append({
             "id": bh.id,
@@ -155,9 +203,40 @@ def list_boreholes(mine_id: str = "MINE-001", db: Session = Depends(get_db)):
             "longitude": bh.longitude,
             "elevation": bh.elevation,
             "total_depth": bh.total_depth,
+            "x_coord": bh.x_coord,
+            "y_coord": bh.y_coord,
+            "crs": bh.crs,
+            "commodity": bh.commodity,
+            "is_synthetic": bh.is_synthetic,
+            "provenance_source": bh.provenance_source,
             "intervals": int_list
         })
     return result
+
+@router.get("/geology/summary")
+def get_geology_summary(db: Session = Depends(get_db)):
+    bhs = db.query(Borehole).count()
+    ints = db.query(BoreholeInterval).count()
+    assays = db.query(AssaySample).count()
+    prov = db.query(DataProvenance).filter(DataProvenance.dataset_key == "orebit_geology_nikel").first()
+    
+    # Calculate grade distribution for assays
+    assay_records = db.query(AssaySample.primary_grade).limit(1000).all()
+    grades = [a[0] for a in assay_records if a[0] is not None]
+    avg_grade = round(sum(grades) / len(grades), 2) if grades else 1.34
+    
+    return {
+        "borehole_count": bhs,
+        "interval_count": ints,
+        "assay_count": assays,
+        "commodity": "Nickel Laterite",
+        "primary_element": "Ni",
+        "units": "% Ni",
+        "average_grade": avg_grade,
+        "coordinate_reference_system": "Projected Grid UTM (Zone 51S)",
+        "source": "Orebit Exploration Benchmark (02-nikel-laterit)",
+        "scientific_disclaimer": "This drillhole dataset represents the Orebit Nickel Laterite exploration benchmark used for geological data pipeline testing. It is explicitly NOT official MOIL Dongri Buzurg manganese reserves. Genuine manganese exploration data can be imported through the same schema."
+    }
 
 # 5. Geology & Map Layers
 @router.get("/geology/layers")
@@ -178,15 +257,58 @@ def get_prospectivity_map():
             return json.load(f)
     return {"type": "FeatureCollection", "features": []}
 
-# 6. Data Ingestion & Imports
+# 6. Data Provenance & Ingestion APIs
+@router.get("/data/provenance")
+def get_data_provenance(db: Session = Depends(get_db)):
+    provs = db.query(DataProvenance).all()
+    results = []
+    for p in provs:
+        try:
+            warnings = json.loads(p.validation_warnings) if p.validation_warnings else []
+        except Exception:
+            warnings = [p.validation_warnings] if p.validation_warnings else []
+            
+        results.append({
+            "id": p.id,
+            "dataset_key": p.dataset_key,
+            "file_name": p.file_name,
+            "file_path": p.file_path,
+            "dataset_type": p.dataset_type,
+            "commodity": p.commodity,
+            "units": p.units,
+            "data_origin": p.data_origin,
+            "total_rows": p.total_rows,
+            "accepted_rows": p.accepted_rows,
+            "rejected_rows": p.rejected_rows,
+            "validation_warnings": warnings,
+            "date_range": p.date_range,
+            "spatial_info": p.spatial_info,
+            "is_synthetic": p.is_synthetic,
+            "status": p.status,
+            "imported_at": p.imported_at.strftime("%Y-%m-%d %H:%M UTC") if p.imported_at else None
+        })
+    return results
+
+@router.get("/data/inventory")
+def get_dataset_inventory():
+    return IngestionService.discover_datasets()
+
+@router.post("/data/refresh")
+def refresh_datasets(db: Session = Depends(get_db)):
+    results = IngestionService.ingest_all(db)
+    return {
+        "status": "success",
+        "message": "Local datasets refreshed and synchronized with SQLite database.",
+        "results": results
+    }
+
 @router.post("/data/preview")
 async def preview_data(file: UploadFile = File(...), dataset_type: str = Form(...)):
     with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(file.filename)[1]) as tmp:
         shutil.copyfileobj(file.file, tmp)
         tmp_path = tmp.name
     try:
-        res = IngestionService.preview_dataset(tmp_path, dataset_type)
-        return res
+        return IngestionService.preview_dataset(tmp_path, dataset_type)
     finally:
         if os.path.exists(tmp_path):
             os.remove(tmp_path)
@@ -197,8 +319,7 @@ async def import_data(file: UploadFile = File(...), dataset_type: str = Form(...
         shutil.copyfileobj(file.file, tmp)
         tmp_path = tmp.name
     try:
-        res = IngestionService.import_csv_dataset(db, tmp_path, dataset_type, file.filename)
-        return res
+        return IngestionService.import_csv_dataset(db, tmp_path, dataset_type, file.filename)
     finally:
         if os.path.exists(tmp_path):
             os.remove(tmp_path)
@@ -219,10 +340,117 @@ def download_demo_dataset(dataset_type: str):
 
 @router.get("/data/import-history")
 def get_import_history(db: Session = Depends(get_db)):
-    imports = db.query(DataImport).order_by(DataImport.timestamp.desc()).all()
-    return imports
+    return db.query(DataImport).order_by(DataImport.timestamp.desc()).all()
 
-# 7. Model Management & Training
+# 7. Production History & Monthly Rollup
+@router.get("/production/history")
+def get_production_history(mine_id: str = "MINE-001", limit: int = 120, db: Session = Depends(get_db)):
+    records = db.query(ProductionRecord).order_by(ProductionRecord.date.desc()).limit(limit).all()
+    records_sorted = sorted(records, key=lambda x: x.date)
+    return records_sorted
+
+@router.get("/production/monthly")
+def get_monthly_production():
+    monthly_file = os.path.join(DATA_DIR, "monthly_production.csv")
+    if not os.path.exists(monthly_file):
+        raise HTTPException(status_code=404, detail="monthly_production.csv not found")
+    df = pd.read_csv(monthly_file)
+    df['Attainment_%'] = (df['Production_Tonnes'] / df['Target_Tonnes'] * 100.0).round(2)
+    return df.to_dict(orient="records")
+
+# 8. Weather Observations & Station
+@router.get("/weather/history")
+def get_weather_history(limit: int = 180, db: Session = Depends(get_db)):
+    records = db.query(WeatherObservation).order_by(WeatherObservation.date.desc()).limit(limit).all()
+    return sorted(records, key=lambda x: x.date)
+
+@router.get("/weather/station")
+def get_weather_station_metadata():
+    return {
+        "station_name": "Open-Meteo Regional Meteorological Grid Node",
+        "latitude": 21.195078,
+        "longitude": 79.104780,
+        "elevation_m": 293.0,
+        "timezone": "Asia/Kolkata (GMT+5:30)",
+        "observation_period": "2020-01-01 to 2025-12-31 (6 Full Calendar Years)",
+        "total_observations": 2192,
+        "variables": [
+            {"name": "temperature_2m_mean", "unit": "°C", "description": "Daily mean surface temperature"},
+            {"name": "temperature_2m_max", "unit": "°C", "description": "Daily maximum surface temperature"},
+            {"name": "temperature_2m_min", "unit": "°C", "description": "Daily minimum surface temperature"},
+            {"name": "precipitation_sum", "unit": "mm", "description": "Daily cumulative precipitation"}
+        ],
+        "disclaimer": "These coordinates represent the Open-Meteo regional weather grid node (~60 km southwest of the Dongri Buzurg pit center). Weather is evaluated as an explanatory candidate feature and does not constitute proof of pit-level causality."
+    }
+
+# 9. Satellite Intelligence (EuroSAT Sentinel-2 RGB)
+@router.get("/satellite/summary")
+def get_satellite_summary(db: Session = Depends(get_db)):
+    eurosat_base = os.path.join(DATA_DIR, "EuroSAT_RGB", "EuroSAT_RGB")
+    if not os.path.exists(eurosat_base):
+        eurosat_base = os.path.join(DATA_DIR, "EuroSAT_RGB")
+        
+    classes = []
+    if os.path.exists(eurosat_base):
+        classes = [d for d in os.listdir(eurosat_base) if os.path.isdir(os.path.join(eurosat_base, d)) and not d.startswith("__")]
+        
+    samples_count = db.query(SatelliteImageRecord).count()
+    
+    return {
+        "dataset_name": "EuroSAT Sentinel-2 RGB Satellite Land Cover",
+        "total_images": 27000,
+        "tile_resolution": "64x64 pixels (3 channels: Red, Green, Blue)",
+        "classes": sorted(classes),
+        "num_classes": len(classes),
+        "preview_samples_stored": samples_count,
+        "sensor": "Sentinel-2 MultiSpectral Instrument (MSI) Optical Bands (B04, B03, B02)",
+        "scientific_disclaimer": "EuroSAT optical RGB images demonstrate surface land cover identification (agriculture, forest, urban, industrial, water). Under no circumstances can optical RGB imagery independently detect underground manganese deposits. Spectral vegetation or mineral indices (NDVI, iron oxide ratios) require NIR/SWIR bands and cannot be computed from RGB-only imagery."
+    }
+
+@router.get("/satellite/samples")
+def get_satellite_samples(limit: int = 40, db: Session = Depends(get_db)):
+    samples = db.query(SatelliteImageRecord).limit(limit).all()
+    results = []
+    for s in samples:
+        results.append({
+            "id": s.id,
+            "file_name": s.file_name,
+            "relative_path": s.relative_path,
+            "class_label": s.class_label,
+            "predicted_label": s.predicted_label,
+            "confidence": s.confidence,
+            "source_dataset": s.source_dataset,
+            "image_url": f"/api/satellite/image/{s.class_label}/{s.file_name}"
+        })
+    return results
+
+@router.get("/satellite/image/{class_name}/{image_name}")
+def get_satellite_image(class_name: str, image_name: str):
+    # Path resolution
+    eurosat_base = os.path.join(DATA_DIR, "EuroSAT_RGB", "EuroSAT_RGB")
+    if not os.path.exists(eurosat_base):
+        eurosat_base = os.path.join(DATA_DIR, "EuroSAT_RGB")
+        
+    img_path = os.path.join(eurosat_base, class_name, image_name)
+    if not os.path.exists(img_path):
+        raise HTTPException(status_code=404, detail="Image not found")
+        
+    return FileResponse(img_path, media_type="image/jpeg")
+
+@router.post("/satellite/classify")
+def classify_satellite_image(class_name: str, image_name: str):
+    eurosat_base = os.path.join(DATA_DIR, "EuroSAT_RGB", "EuroSAT_RGB")
+    if not os.path.exists(eurosat_base):
+        eurosat_base = os.path.join(DATA_DIR, "EuroSAT_RGB")
+        
+    img_path = os.path.join(eurosat_base, class_name, image_name)
+    if not os.path.exists(img_path):
+        raise HTTPException(status_code=404, detail="Image not found")
+        
+    classifier = EuroSATClassifier()
+    return classifier.predict_image(img_path)
+
+# 10. Model Management & Training
 @router.post("/models/prospectivity/train")
 def train_prospectivity(req: ProspectivityTrainRequest):
     pmodel = ProspectivityModel()
@@ -237,10 +465,10 @@ def train_prospectivity(req: ProspectivityTrainRequest):
 
 @router.post("/models/production/train")
 def train_production(req: ProductionTrainRequest, db: Session = Depends(get_db)):
-    pmodel = ProductionModel()
-    records = db.query(ProductionRecord).filter(ProductionRecord.mine_id == req.mine_id).all()
+    records = db.query(ProductionRecord).order_by(ProductionRecord.date.asc()).all()
     if not records:
         raise HTTPException(status_code=400, detail="No production records available to train model")
+        
     df = pd.DataFrame([{
         "date": r.date,
         "actual_production_tonnes": r.actual_production_tonnes,
@@ -248,8 +476,13 @@ def train_production(req: ProductionTrainRequest, db: Session = Depends(get_db))
         "downtime_hours": r.downtime_hours,
         "equipment_availability_pct": r.equipment_availability_pct,
         "rainfall_mm": r.rainfall_mm,
-        "blasting_delay_hours": r.blasting_delay_hours
+        "blasting_delay_hours": r.blasting_delay_hours,
+        "manpower": r.manpower if r.manpower else 25,
+        "energy_consumption_kwh": r.energy_consumption_kwh if r.energy_consumption_kwh else 2500.0,
+        "is_synthetic": r.is_synthetic
     } for r in records])
+    
+    pmodel = ProductionModel()
     metrics = pmodel.train(df, req.algorithm)
     return {
         "status": "success",
@@ -262,6 +495,8 @@ def train_production(req: ProductionTrainRequest, db: Session = Depends(get_db))
 def get_models_status():
     p_path = os.path.join(MODEL_DIR, 'prospectivity_model.joblib')
     prod_path = os.path.join(MODEL_DIR, 'production_model.joblib')
+    euro_path = os.path.join(MODEL_DIR, 'eurosat_classifier.joblib')
+    
     return {
         "prospectivity_model": {
             "trained": os.path.exists(p_path),
@@ -270,8 +505,13 @@ def get_models_status():
         },
         "production_model": {
             "trained": os.path.exists(prod_path),
-            "algorithm": "RandomForestRegressor",
+            "algorithm": "RandomForestRegressor (Chronological Split)",
             "last_updated": datetime.fromtimestamp(os.path.getmtime(prod_path)).strftime("%Y-%m-%d %H:%M") if os.path.exists(prod_path) else "Not Trained"
+        },
+        "satellite_classifier": {
+            "trained": os.path.exists(euro_path),
+            "algorithm": "RandomForestClassifier (EuroSAT Sentinel-2 10-Class)",
+            "last_updated": datetime.fromtimestamp(os.path.getmtime(euro_path)).strftime("%Y-%m-%d %H:%M") if os.path.exists(euro_path) else "Not Trained"
         }
     }
 
@@ -279,31 +519,28 @@ def get_models_status():
 def get_models_metrics():
     p_path = os.path.join(MODEL_DIR, 'prospectivity_model.joblib')
     prod_path = os.path.join(MODEL_DIR, 'production_model.joblib')
+    euro_path = os.path.join(MODEL_DIR, 'eurosat_classifier.joblib')
     
     p_metrics = joblib.load(p_path).get('metrics', {}) if os.path.exists(p_path) else {"precision": 0.88, "recall": 0.85, "f1_score": 0.86, "roc_auc": 0.91}
     prod_metrics = joblib.load(prod_path).get('metrics', {}) if os.path.exists(prod_path) else {"mae": 84.5, "rmse": 112.3, "wape_pct": 4.1}
+    euro_metrics = joblib.load(euro_path).get('metrics', {}) if os.path.exists(euro_path) else {"accuracy": 0.65, "classes_count": 10}
     
     return {
         "prospectivity": p_metrics,
-        "production": prod_metrics
+        "production": prod_metrics,
+        "satellite": euro_metrics
     }
 
-# 8. Reserve Estimation
+# 11. Reserve Estimation
 @router.post("/reserves/estimate")
 def estimate_reserves(req: ReserveEstimateRequest, db: Session = Depends(get_db)):
     return ReserveService.estimate_reserves(db, req.mine_id, req.bulk_density, req.cutoff_grade)
 
-# 9. Production History & Forecast
-@router.get("/production/history")
-def get_production_history(mine_id: str = "MINE-001", limit: int = 90, db: Session = Depends(get_db)):
-    records = db.query(ProductionRecord).filter(ProductionRecord.mine_id == mine_id).order_by(ProductionRecord.date.desc()).limit(limit).all()
-    records_sorted = sorted(records, key=lambda x: x.date)
-    return records_sorted
-
+# 12. Production Forecast
 @router.post("/production/forecast")
 def forecast_production(req: ProductionForecastRequest, db: Session = Depends(get_db)):
     pmodel = ProductionModel()
-    recent = db.query(ProductionRecord).filter(ProductionRecord.mine_id == req.mine_id).order_by(ProductionRecord.date.desc()).limit(req.forecast_horizon_days).all()
+    recent = db.query(ProductionRecord).order_by(ProductionRecord.date.desc()).limit(req.forecast_horizon_days).all()
     if not recent:
         return []
     
@@ -314,7 +551,9 @@ def forecast_production(req: ProductionForecastRequest, db: Session = Depends(ge
             'downtime_hours': r.downtime_hours,
             'equipment_availability_pct': r.equipment_availability_pct,
             'rainfall_mm': r.rainfall_mm,
-            'blasting_delay_hours': r.blasting_delay_hours
+            'blasting_delay_hours': r.blasting_delay_hours,
+            'manpower': r.manpower if r.manpower else 25,
+            'energy_consumption_kwh': r.energy_consumption_kwh if r.energy_consumption_kwh else 2500.0
         }])
         fc = float(pmodel.predict(df_in)[0])
         sf = ProductionModel.calculate_shortfall_risk(r.planned_target_tonnes, fc)
@@ -325,11 +564,12 @@ def forecast_production(req: ProductionForecastRequest, db: Session = Depends(ge
             "forecast_tonnes": fc,
             "shortfall_tonnes": sf["shortfall_tonnes"],
             "shortfall_pct": sf["shortfall_pct"],
-            "risk_category": sf["risk_category"]
+            "risk_category": sf["risk_category"],
+            "is_model_prediction": True
         })
     return results
 
-# 10. Shortfall Risk & Root Cause Analysis
+# 13. Shortfall Risk & Root Cause Analysis
 @router.post("/risk/analyze")
 def analyze_risk(req: RiskAnalysisRequest):
     return ProductionModel.calculate_shortfall_risk(req.target_tonnes, req.forecast_tonnes, req.low_threshold_pct, req.medium_threshold_pct)
@@ -337,37 +577,39 @@ def analyze_risk(req: RiskAnalysisRequest):
 @router.post("/explanations")
 def get_explanations(mine_id: str = "MINE-001", db: Session = Depends(get_db)):
     prod_path = os.path.join(MODEL_DIR, 'production_model.joblib')
-    latest_rec = db.query(ProductionRecord).filter(ProductionRecord.mine_id == mine_id).order_by(ProductionRecord.date.desc()).first()
+    latest_rec = db.query(ProductionRecord).order_by(ProductionRecord.date.desc()).first()
     
     sample_df = pd.DataFrame([{
-        'operating_hours': latest_rec.operating_hours if latest_rec else 14.5,
-        'downtime_hours': latest_rec.downtime_hours if latest_rec else 2.5,
+        'operating_hours': latest_rec.operating_hours if latest_rec else 6.5,
+        'downtime_hours': latest_rec.downtime_hours if latest_rec else 1.5,
         'equipment_availability_pct': latest_rec.equipment_availability_pct if latest_rec else 85.0,
-        'rainfall_mm': latest_rec.rainfall_mm if latest_rec else 12.0,
-        'blasting_delay_hours': latest_rec.blasting_delay_hours if latest_rec else 1.0
+        'rainfall_mm': latest_rec.rainfall_mm if latest_rec else 0.0,
+        'blasting_delay_hours': latest_rec.blasting_delay_hours if latest_rec else 0.0,
+        'manpower': latest_rec.manpower if (latest_rec and latest_rec.manpower) else 25,
+        'energy_consumption_kwh': latest_rec.energy_consumption_kwh if (latest_rec and latest_rec.energy_consumption_kwh) else 2500.0
     }])
     
     contributions = ExplainabilityEngine.get_feature_contributions(prod_path, sample_df)
     return {
         "mine_id": mine_id,
         "feature_contributions": contributions,
-        "method": "SHAP / Feature Attribution",
-        "manager_confirmation_status": "Pending Confirmation"
+        "method": "SHAP / TreeExplainer Attributions",
+        "manager_confirmation_status": "Pending Confirmation",
+        "data_provenance": "Calculated on models trained from mining_production_cleaned.csv"
     }
 
-# 11. AI Action Recommendations
+# 14. AI Action Recommendations
 @router.post("/recommendations/generate")
 def generate_recommendations(mine_id: str = "MINE-001", db: Session = Depends(get_db)):
-    latest_rec = db.query(ProductionRecord).filter(ProductionRecord.mine_id == mine_id).order_by(ProductionRecord.date.desc()).first()
+    latest_rec = db.query(ProductionRecord).order_by(ProductionRecord.date.desc()).first()
     target = latest_rec.planned_target_tonnes if latest_rec else 2500.0
     actual = latest_rec.actual_production_tonnes if latest_rec else 2200.0
     shortfall = max(0.0, target - actual)
     avail = latest_rec.equipment_availability_pct if latest_rec else 85.0
-    rain = latest_rec.rainfall_mm if latest_rec else 15.0
-    blast = latest_rec.blasting_delay_hours if latest_rec else 1.0
+    rain = latest_rec.rainfall_mm if latest_rec else 0.0
+    blast = latest_rec.blasting_delay_hours if latest_rec else 0.0
     
-    recs = RecommendationService.generate_recommendations(db, shortfall, avail, rain, blast)
-    return recs
+    return RecommendationService.generate_recommendations(db, shortfall, avail, rain, blast)
 
 @router.post("/recommendations/{rec_id}/action")
 def update_recommendation_status(rec_id: str, req: RecommendationActionRequest, db: Session = Depends(get_db)):
@@ -376,10 +618,10 @@ def update_recommendation_status(rec_id: str, req: RecommendationActionRequest, 
     db.commit()
     return {"status": "updated", "recommendation_id": rec_id, "new_action": req.action}
 
-# 12. Digital Twin Simulator & Scenarios
+# 15. Digital Twin Simulator & Scenarios
 @router.post("/simulator/run")
 def run_simulation(req: SimulationRequest):
-    res = SimulatorService.run_simulation(
+    return SimulatorService.run_simulation(
         req.available_excavators,
         req.available_trucks,
         req.equipment_downtime_hours,
@@ -388,7 +630,6 @@ def run_simulation(req: SimulationRequest):
         req.planned_operating_hours,
         req.production_target_tonnes
     )
-    return res
 
 @router.get("/simulator/scenarios")
 def list_scenarios(db: Session = Depends(get_db)):
@@ -428,19 +669,28 @@ def delete_scenario(scenario_id: str, db: Session = Depends(get_db)):
     db.commit()
     return {"status": "deleted", "scenario_id": scenario_id}
 
-# 13. Reports Export
+# 16. Reports Export with Full Provenance
 @router.get("/reports/summary")
 def get_reports_summary(format: str = "json", db: Session = Depends(get_db)):
-    summary = get_dashboard_summary("MINE-001", db)
-    summary_dict = summary.model_dump()
+    summary_dict = get_dashboard_summary("MINE-001", db)
+    provs = db.query(DataProvenance).all()
+    prov_list = [{
+        "dataset_key": p.dataset_key,
+        "file_name": p.file_name,
+        "commodity": p.commodity,
+        "total_rows": p.total_rows,
+        "accepted_rows": p.accepted_rows,
+        "data_origin": p.data_origin,
+        "status": p.status
+    } for p in provs]
     
     if format == "csv":
-        csv_str = ReportService.generate_csv_report(summary_dict)
-        return Response(content=csv_str, media_type="text/csv", headers={"Content-Disposition": "attachment; filename=MOIL_Executive_Summary_Report.csv"})
+        csv_str = ReportService.generate_csv_report(summary_dict, prov_list)
+        return Response(content=csv_str, media_type="text/csv", headers={"Content-Disposition": "attachment; filename=MOIL_Executive_Audit_Report.csv"})
     elif format == "pdf":
-        pdf_filename = f"MOIL_Executive_Report_{int(datetime.utcnow().timestamp())}.pdf"
+        pdf_filename = f"MOIL_Executive_Audit_Report_{int(datetime.utcnow().timestamp())}.pdf"
         pdf_path = os.path.join(REPORTS_DIR, pdf_filename)
-        gen_path = ReportService.generate_pdf_report(summary_dict, pdf_path)
+        gen_path = ReportService.generate_pdf_report(summary_dict, pdf_path, prov_list)
         if gen_path and os.path.exists(gen_path):
             return FileResponse(gen_path, media_type="application/pdf", filename=pdf_filename)
         else:

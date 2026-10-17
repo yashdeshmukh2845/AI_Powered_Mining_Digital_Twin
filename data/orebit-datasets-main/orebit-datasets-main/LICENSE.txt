@@ -1,0 +1,40 @@
+Orebit Synthetic Drillhole Datasets
+Copyright (c) 2026 Orebit.id
+
+Licensed under the Creative Commons Attribution 4.0 International Licence
+(CC BY 4.0).
+
+You are free to:
+  SHARE   - copy and redistribute the material in any medium or format
+  ADAPT   - remix, transform, and build upon the material
+            for any purpose, including commercially.
+
+Under the following term:
+  ATTRIBUTION - You must give appropriate credit, provide a link to the
+  licence, and indicate if changes were made. You may do so in any
+  reasonable manner, but not in any way that suggests the licensor
+  endorses you or your use.
+
+Suggested attribution string:
+  "Orebit Synthetic Drillhole Datasets (2026), Orebit.id, CC BY 4.0"
+
+Licence deed:  https://creativecommons.org/licenses/by/4.0/
+Legal code:    https://creativecommons.org/licenses/by/4.0/legalcode
+
+-------------------------------------------------------------------------
+IMPORTANT - NATURE OF THIS DATA
+
+These datasets are ENTIRELY SYNTHETIC. They were produced by the numerical
+models in `_generator/` and contain no measurements from any real drillhole,
+tenement, or company database. Prospect names, coordinates and grades are
+fictional. Any resemblance to a real deposit is coincidental.
+
+Because the data is generated rather than collected, it carries no third
+party rights, no confidentiality obligation, and no data-sharing restriction.
+That is the entire point: it can be redistributed, bundled into software,
+published in tutorials, and used in teaching without a licence review.
+
+These datasets must NOT be used as evidence, analogue, or supporting data in
+any public resource or reserve statement (JORC, NI 43-101, SNI, or any other
+reporting code). They are for education, software testing, benchmarking and
+demonstration only.

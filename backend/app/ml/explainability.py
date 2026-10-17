@@ -47,7 +47,9 @@ class ExplainabilityEngine:
             'downtime_hours': ('Equipment Downtime', 'hrs'),
             'equipment_availability_pct': ('Equipment Availability', '%'),
             'rainfall_mm': ('Rainfall Level', 'mm'),
-            'blasting_delay_hours': ('Blasting Delay', 'hrs')
+            'blasting_delay_hours': ('Blasting Delay', 'hrs'),
+            'manpower': ('Workforce Allocation', 'workers'),
+            'energy_consumption_kwh': ('Energy Consumption', 'kWh')
         }
         
         results = []

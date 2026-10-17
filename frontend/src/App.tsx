@@ -12,6 +12,7 @@ import { DigitalTwinSimulator } from './pages/DigitalTwinSimulator';
 import { DataManagement } from './pages/DataManagement';
 import { ModelPerformance } from './pages/ModelPerformance';
 import { ReportsSettings } from './pages/ReportsSettings';
+import { SatelliteIntelligence } from './pages/SatelliteIntelligence';
 import type { DashboardSummary, Borehole, OreBlock, ForecastItem, Recommendation } from './types';
 import { api } from './services/api';
 
@@ -19,6 +20,7 @@ export function App() {
   const [activeTab, setActiveTab] = useState<string>('overview');
   const [selectedMineId, setSelectedMineId] = useState<string>('MINE-001');
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
+  const [isDemoMode, setIsDemoMode] = useState<boolean>(false);
   const [boreholes, setBoreholes] = useState<Borehole[]>([]);
   const [blocks, setBlocks] = useState<OreBlock[]>([]);
   const [geologyData, setGeologyData] = useState<any>(null);
@@ -35,6 +37,9 @@ export function App() {
     try {
       const sumRes = await api.getDashboardSummary(mineId);
       setSummary(sumRes);
+      if (sumRes.demo_mode !== undefined) {
+        setIsDemoMode(sumRes.demo_mode);
+      }
 
       // Load remaining data in parallel
       const [bhRes, blkRes, geoRes, pmapRes, fcRes, recRes, metRes] = await Promise.allSettled([
@@ -86,7 +91,11 @@ export function App() {
 
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col font-sans">
-      <DemoBanner />
+      <DemoBanner
+        isDemoMode={isDemoMode}
+        onToggleDemoMode={(val) => setIsDemoMode(val)}
+        provenanceSummary="Active integration: 5,000 shift records (mining_production_cleaned.csv) + 2,192 weather days (open-meteo) + 350 Orebit drillholes + 27,000 EuroSAT images."
+      />
       <div className="flex flex-1">
         <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
 
@@ -122,6 +131,10 @@ export function App() {
                 geologyData={geologyData}
                 prospectivityMap={prospectivityMap}
               />
+            )}
+
+            {activeTab === 'satellite' && (
+              <SatelliteIntelligence />
             )}
 
             {activeTab === 'reserves' && (
