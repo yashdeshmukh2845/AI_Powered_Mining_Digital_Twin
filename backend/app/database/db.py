@@ -110,6 +110,59 @@ def ensure_schema_migrations():
         except Exception:
             pass
 
+        # Check equipment
+        try:
+            res = conn.execute(text("PRAGMA table_info(equipment)"))
+            existing_cols = {row[1] for row in res.fetchall()}
+            eq_additions = [
+                ("engine_hours", "REAL DEFAULT 4500.0"),
+                ("hours_since_last_maintenance", "REAL DEFAULT 120.0"),
+                ("past_failure_count_90d", "INTEGER DEFAULT 1"),
+                ("average_load_pct", "REAL DEFAULT 82.0"),
+                ("health_score", "REAL DEFAULT 90.0"),
+                ("failure_risk_24h", "REAL DEFAULT 0.08"),
+                ("failure_risk_48h", "REAL DEFAULT 0.14"),
+                ("failure_risk_72h", "REAL DEFAULT 0.22"),
+                ("critical_component", "TEXT DEFAULT 'Hydraulic System'")
+            ]
+            for col_name, col_type in eq_additions:
+                if col_name not in existing_cols:
+                    conn.execute(text(f"ALTER TABLE equipment ADD COLUMN {col_name} {col_type}"))
+                    conn.commit()
+        except Exception:
+            pass
+
+        # Check equipment_downtime
+        try:
+            res = conn.execute(text("PRAGMA table_info(equipment_downtime)"))
+            existing_cols = {row[1] for row in res.fetchall()}
+            dt_additions = [
+                ("failure_component", "TEXT DEFAULT 'Hydraulic Hose'"),
+                ("engine_hours_at_failure", "REAL DEFAULT 4200.0"),
+                ("hours_since_last_maintenance", "REAL DEFAULT 240.0"),
+                ("ambient_temp", "REAL DEFAULT 32.0"),
+                ("rainfall_3d_sum", "REAL DEFAULT 15.0")
+            ]
+            for col_name, col_type in dt_additions:
+                if col_name not in existing_cols:
+                    conn.execute(text(f"ALTER TABLE equipment_downtime ADD COLUMN {col_name} {col_type}"))
+                    conn.commit()
+        except Exception:
+            pass
+
+        # Check environmental_observations
+        try:
+
+            res = conn.execute(text("PRAGMA table_info(environmental_observations)"))
+            existing_cols = {row[1] for row in res.fetchall()}
+            if "data_source" not in existing_cols:
+                conn.execute(text("ALTER TABLE environmental_observations ADD COLUMN data_source TEXT DEFAULT 'public_real'"))
+                conn.commit()
+        except Exception:
+            pass
+
+
+
 def get_db():
     db = SessionLocal()
     try:

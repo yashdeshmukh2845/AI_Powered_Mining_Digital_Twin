@@ -131,9 +131,18 @@ class Equipment(Base):
     id = Column(String, primary_key=True, index=True)
     mine_id = Column(String, ForeignKey("mines.id"), index=True)
     name = Column(String, nullable=False)
-    equipment_type = Column(String, nullable=False)
+    equipment_type = Column(String, nullable=False) # Excavator, Haul Truck, Drill Rig, Crusher
     status = Column(String, default="Operational")
     capacity_tph = Column(Float, default=150.0)
+    engine_hours = Column(Float, default=4500.0)
+    hours_since_last_maintenance = Column(Float, default=120.0)
+    past_failure_count_90d = Column(Integer, default=1)
+    average_load_pct = Column(Float, default=82.0)
+    health_score = Column(Float, default=90.0)
+    failure_risk_24h = Column(Float, default=0.08)
+    failure_risk_48h = Column(Float, default=0.14)
+    failure_risk_72h = Column(Float, default=0.22)
+    critical_component = Column(String, default="Hydraulic System")
 
 class EquipmentDowntime(Base):
     __tablename__ = "equipment_downtime"
@@ -144,6 +153,12 @@ class EquipmentDowntime(Base):
     downtime_hours = Column(Float, nullable=False)
     reason = Column(String)
     category = Column(String)
+    failure_component = Column(String, default="Hydraulic Hose")
+    engine_hours_at_failure = Column(Float, default=4200.0)
+    hours_since_last_maintenance = Column(Float, default=240.0)
+    ambient_temp = Column(Float, default=32.0)
+    rainfall_3d_sum = Column(Float, default=15.0)
+
 
 class BlastingEvent(Base):
     __tablename__ = "blasting_events"
@@ -166,6 +181,8 @@ class EnvironmentalObservation(Base):
     ndvi = Column(Float, default=0.5)
     land_surface_temp_c = Column(Float, default=32.0)
     sar_coherence = Column(Float, default=0.7)
+    data_source = Column(String, default="public_real")
+
 
 class WeatherObservation(Base):
     __tablename__ = "weather_observations"

@@ -13,6 +13,8 @@ import { DataManagement } from './pages/DataManagement';
 import { ModelPerformance } from './pages/ModelPerformance';
 import { ReportsSettings } from './pages/ReportsSettings';
 import { SatelliteIntelligence } from './pages/SatelliteIntelligence';
+import { EquipmentHealth } from './pages/EquipmentHealth';
+import { SpaceDataValue } from './pages/SpaceDataValue';
 import type { DashboardSummary, Borehole, OreBlock, ForecastItem, Recommendation } from './types';
 import { api } from './services/api';
 
@@ -94,8 +96,9 @@ export function App() {
       <DemoBanner
         isDemoMode={isDemoMode}
         onToggleDemoMode={(val) => setIsDemoMode(val)}
-        provenanceSummary="Active integration: 5,000 shift records (mining_production_cleaned.csv) + 2,192 weather days (open-meteo) + 350 Orebit drillholes + 27,000 EuroSAT images."
+        provenanceSummary="Active integration: 5,000 shift records + 2,192 weather days (Open-Meteo) + 350 Orebit drillholes + Sentinel-2 surface change monitoring."
       />
+
       <div className="flex flex-1">
         <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
 
@@ -137,8 +140,12 @@ export function App() {
               <SatelliteIntelligence />
             )}
 
+            {activeTab === 'ablation' && (
+              <SpaceDataValue />
+            )}
+
             {activeTab === 'reserves' && (
-              <ReserveIntelligence blocks={blocks} />
+              <ReserveIntelligence />
             )}
 
             {activeTab === 'forecast' && (
@@ -147,6 +154,10 @@ export function App() {
                 modelMetrics={modelMetrics}
                 onRefreshForecast={handleRefreshForecast}
               />
+            )}
+
+            {activeTab === 'equipment' && (
+              <EquipmentHealth />
             )}
 
             {activeTab === 'risk' && (

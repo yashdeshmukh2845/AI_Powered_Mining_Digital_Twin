@@ -28,14 +28,15 @@ export const DemoBanner: React.FC<DemoBannerProps> = ({
           <span>
             {isDemoMode ? (
               <>
-                <strong className="text-amber-400">DEMO MODE:</strong> Displaying synthetic baseline demonstration data.
+                <strong className="text-amber-400">DEMO MODE:</strong> Demo data - replace via the Data Ingestion pipeline with MOIL data.
               </>
             ) : (
               <>
                 <strong className="text-emerald-400 font-bold">DATA-DRIVEN MODE:</strong>{' '}
-                {provenanceSummary || 'Active integration: 5,000 shift records (mining_production_cleaned.csv) + 2,192 weather days + 350 Orebit drillholes + 27,000 EuroSAT images.'}
+                {provenanceSummary || 'Active integration: 5,000 shift records + 2,192 weather days (Open-Meteo) + Orebit drillholes + Sentinel-2 surface monitoring.'}
               </>
             )}
+
           </span>
         </div>
 

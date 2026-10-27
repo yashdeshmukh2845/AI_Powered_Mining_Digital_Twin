@@ -113,10 +113,11 @@ export const Overview: React.FC<OverviewProps> = ({
             </div>
             <div className="p-2.5 bg-slate-950/80 rounded border border-slate-800">
               <strong className="text-slate-200 block mb-1">Geology & Space Tech</strong>
-              Orebit Benchmark: 350 drillholes (% Ni). EuroSAT: 27,000 optical RGB land-cover tiles (cannot detect subsurface Mn).
+              Exploration: 30 boreholes & 3D Kriging block model. Satellite: Sentinel-2 surface context (pit flooding & haul road friction).
             </div>
           </div>
         </div>
+
       )}
 
       {/* KPI Cards Grid */}

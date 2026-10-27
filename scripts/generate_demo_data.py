@@ -257,27 +257,73 @@ df_blocks = pd.DataFrame(blocks)
 df_blocks.to_csv(os.path.join(DATA_DEMO_DIR, 'ore_blocks.csv'), index=False)
 df_blocks.head(0).to_csv(os.path.join(DATA_TEMPLATE_DIR, 'ore_blocks_template.csv'), index=False)
 
-# 6. Equipment & Equipment Downtime
+# 6. Equipment & Equipment Telemetry
 equipment = [
-    {"id": "EQ-01", "mine_id": "MINE-001", "name": "Excavator CAT 390F #1", "equipment_type": "Excavator", "status": "Operational", "capacity_tph": 350.0},
-    {"id": "EQ-02", "mine_id": "MINE-001", "name": "Excavator Komatsu PC1250 #2", "equipment_type": "Excavator", "status": "Operational", "capacity_tph": 400.0},
-    {"id": "EQ-03", "mine_id": "MINE-001", "name": "Haul Truck Volvo A45G #1", "equipment_type": "Haul Truck", "status": "Operational", "capacity_tph": 180.0},
-    {"id": "EQ-04", "mine_id": "MINE-001", "name": "Haul Truck Volvo A45G #2", "equipment_type": "Haul Truck", "status": "Operational", "capacity_tph": 180.0},
-    {"id": "EQ-05", "mine_id": "MINE-001", "name": "Haul Truck CAT 775G #3", "equipment_type": "Haul Truck", "status": "Operational", "capacity_tph": 220.0},
-    {"id": "EQ-06", "mine_id": "MINE-001", "name": "Drill Rig Sandvik DR412i #1", "equipment_type": "Drill Rig", "status": "Operational", "capacity_tph": 120.0},
-    {"id": "EQ-07", "mine_id": "MINE-001", "name": "Primary Jaw Crusher #1", "equipment_type": "Crusher", "status": "Operational", "capacity_tph": 600.0}
+    {
+        "id": "EQ-01", "mine_id": "MINE-001", "name": "Excavator CAT 390F #1", "equipment_type": "Excavator",
+        "status": "Operational", "capacity_tph": 350.0, "engine_hours": 6840.0, "hours_since_last_maintenance": 185.0,
+        "past_failure_count_90d": 2, "average_load_pct": 86.0, "health_score": 88.0,
+        "failure_risk_24h": 0.09, "failure_risk_48h": 0.16, "failure_risk_72h": 0.24, "critical_component": "Hydraulic Pump"
+    },
+    {
+        "id": "EQ-02", "mine_id": "MINE-001", "name": "Excavator Komatsu PC1250 #2", "equipment_type": "Excavator",
+        "status": "Warning", "capacity_tph": 400.0, "engine_hours": 8920.0, "hours_since_last_maintenance": 242.0,
+        "past_failure_count_90d": 4, "average_load_pct": 92.0, "health_score": 68.0,
+        "failure_risk_24h": 0.28, "failure_risk_48h": 0.42, "failure_risk_72h": 0.58, "critical_component": "Swing Motor & Hydraulics"
+    },
+    {
+        "id": "EQ-03", "mine_id": "MINE-001", "name": "Haul Truck Volvo A45G #1", "equipment_type": "Haul Truck",
+        "status": "Operational", "capacity_tph": 180.0, "engine_hours": 4200.0, "hours_since_last_maintenance": 95.0,
+        "past_failure_count_90d": 1, "average_load_pct": 80.0, "health_score": 94.0,
+        "failure_risk_24h": 0.04, "failure_risk_48h": 0.08, "failure_risk_72h": 0.12, "critical_component": "Transmission"
+    },
+    {
+        "id": "EQ-04", "mine_id": "MINE-001", "name": "Haul Truck Volvo A45G #2", "equipment_type": "Haul Truck",
+        "status": "Operational", "capacity_tph": 180.0, "engine_hours": 5150.0, "hours_since_last_maintenance": 140.0,
+        "past_failure_count_90d": 2, "average_load_pct": 84.0, "health_score": 89.0,
+        "failure_risk_24h": 0.07, "failure_risk_48h": 0.13, "failure_risk_72h": 0.20, "critical_component": "Suspension Struts"
+    },
+    {
+        "id": "EQ-05", "mine_id": "MINE-001", "name": "Haul Truck CAT 775G #3", "equipment_type": "Haul Truck",
+        "status": "Operational", "capacity_tph": 220.0, "engine_hours": 3800.0, "hours_since_last_maintenance": 70.0,
+        "past_failure_count_90d": 0, "average_load_pct": 78.0, "health_score": 96.0,
+        "failure_risk_24h": 0.03, "failure_risk_48h": 0.06, "failure_risk_72h": 0.09, "critical_component": "Braking System"
+    },
+    {
+        "id": "EQ-06", "mine_id": "MINE-001", "name": "Drill Rig Sandvik DR412i #1", "equipment_type": "Drill Rig",
+        "status": "Operational", "capacity_tph": 120.0, "engine_hours": 3100.0, "hours_since_last_maintenance": 110.0,
+        "past_failure_count_90d": 1, "average_load_pct": 75.0, "health_score": 92.0,
+        "failure_risk_24h": 0.05, "failure_risk_48h": 0.10, "failure_risk_72h": 0.15, "critical_component": "Compressor Unit"
+    },
+    {
+        "id": "EQ-07", "mine_id": "MINE-001", "name": "Primary Jaw Crusher #1", "equipment_type": "Crusher",
+        "status": "Operational", "capacity_tph": 600.0, "engine_hours": 9400.0, "hours_since_last_maintenance": 160.0,
+        "past_failure_count_90d": 2, "average_load_pct": 88.0, "health_score": 85.0,
+        "failure_risk_24h": 0.08, "failure_risk_48h": 0.15, "failure_risk_72h": 0.22, "critical_component": "Jaw Toggle Plate"
+    }
 ]
 df_eq = pd.DataFrame(equipment)
 df_eq.to_csv(os.path.join(DATA_DEMO_DIR, 'equipment.csv'), index=False)
 df_eq.head(0).to_csv(os.path.join(DATA_TEMPLATE_DIR, 'equipment_template.csv'), index=False)
 
-# 7. Operational & Environmental Daily Records (365 days of realistic time-series)
+# 7. Operational & Environmental Daily Records (365 days of real weather + causal production)
 prod_records = []
 env_records = []
 blasting_events = []
 downtimes = []
 
-start_prod_date = datetime(2025, 10, 1) # 1 year of data ending Sep 2026
+# Check if real environmental observations already exist (from fetch_satellite_context)
+env_path = os.path.join(DATA_DEMO_DIR, 'environmental_observations.csv')
+real_env_map = {}
+if os.path.exists(env_path):
+    try:
+        df_real_env = pd.read_csv(env_path)
+        for _, row in df_real_env.iterrows():
+            real_env_map[str(row['date'])] = row
+    except Exception as e:
+        print(f"Notice: Using calibrated meteorological generator ({e})")
+
+start_prod_date = datetime(2024, 10, 1)
 
 downtime_id_cnt = 1
 blast_id_cnt = 1
@@ -286,18 +332,25 @@ for d in range(365):
     curr_d = start_prod_date + timedelta(days=d)
     d_str = curr_d.strftime("%Y-%m-%d")
     
-    # Seasonal rainfall pattern (Monsoon: June to September)
-    month = curr_d.month
-    if month in [6, 7, 8, 9]:
-        rainfall = round(max(0.0, np.random.exponential(24.0) if np.random.rand() > 0.3 else 0.0), 1)
+    # Real environmental observation if available, otherwise calibrated monsoon pattern
+    if d_str in real_env_map:
+        erow = real_env_map[d_str]
+        rainfall = float(erow.get('rainfall_mm', 0.0))
+        temp_c = float(erow.get('temp_mean_c', 28.0))
+        soil_m = float(erow.get('soil_moisture', 0.28))
+        ndvi = float(erow.get('ndvi', 0.50))
+        lst_c = float(erow.get('land_surface_temp_c', temp_c))
+        sar_coh = float(erow.get('sar_coherence', 0.75))
     else:
-        rainfall = round(max(0.0, np.random.exponential(3.0) if np.random.rand() > 0.8 else 0.0), 1)
+        month = curr_d.month
+        is_monsoon = month in [6, 7, 8, 9]
+        rainfall = round(max(0.0, np.random.exponential(24.0) if is_monsoon and np.random.rand() > 0.3 else 0.0), 1)
+        temp_c = round(32.0 + 8.0 * math.sin((d - 80) / 58.0) + np.random.uniform(-2.0, 2.0), 1)
+        soil_m = round(min(1.0, max(0.1, 0.2 + (rainfall / 50.0) + np.random.uniform(-0.05, 0.05))), 3)
+        ndvi = round(min(0.85, max(0.15, 0.45 + 0.2 * math.sin(d / 58.0) + np.random.uniform(-0.03, 0.03))), 3)
+        lst_c = temp_c
+        sar_coh = round(max(0.1, min(0.95, 0.8 - (rainfall / 80.0) + np.random.uniform(-0.05, 0.05))), 3)
         
-    soil_m = round(min(1.0, max(0.1, 0.2 + (rainfall / 50.0) + np.random.uniform(-0.05, 0.05))), 3)
-    ndvi = round(min(0.85, max(0.15, 0.45 + 0.2 * math.sin(d / 58.0) + np.random.uniform(-0.03, 0.03))), 3)
-    lst_c = round(32.0 + 8.0 * math.sin((d - 80) / 58.0) + np.random.uniform(-2.0, 2.0), 1)
-    sar_coh = round(max(0.1, min(0.95, 0.8 - (rainfall / 80.0) + np.random.uniform(-0.05, 0.05))), 3)
-    
     env_records.append({
         "id": f"ENV-{d+1:04d}",
         "mine_id": "MINE-001",
@@ -306,21 +359,21 @@ for d in range(365):
         "soil_moisture": soil_m,
         "ndvi": ndvi,
         "land_surface_temp_c": lst_c,
-        "sar_coherence": sar_coh
+        "sar_coherence": sar_coh,
+        "data_source": "public_real" if d_str in real_env_map else "synthetic"
     })
     
-    # Production calculation baseline
-    target_tonnes = 2500.0  # Daily target for Dongri Buzurg
+    # Target Production: Illustrative benchmark (2,500 t/day)
+    target_tonnes = 2500.0
     
-    # Breakdown events impact
-    eq_avail_pct = round(np.random.uniform(82.0, 98.0), 1)
-    if np.random.rand() < 0.15: # Random breakdown day
-        eq_avail_pct -= np.random.uniform(15.0, 35.0)
-        eq_avail_pct = round(max(40.0, eq_avail_pct), 1)
+    # Equipment breakdowns & telemetry evolution
+    eq_avail_pct = round(np.random.uniform(84.0, 98.0), 1)
+    if np.random.rand() < 0.14: # Failure event
+        eq_avail_pct -= np.random.uniform(14.0, 32.0)
+        eq_avail_pct = round(max(42.0, eq_avail_pct), 1)
         
-        # Log downtime record
         eq_affected = random.choice(equipment)
-        dt_hrs = round(np.random.uniform(2.5, 9.0), 1)
+        dt_hrs = round(np.random.uniform(2.5, 8.5), 1)
         downtimes.append({
             "id": f"DT-{downtime_id_cnt:04d}",
             "equipment_id": eq_affected["id"],
@@ -328,19 +381,21 @@ for d in range(365):
             "end_time": f"{d_str} {int(8.5+dt_hrs):02d}:00:00",
             "downtime_hours": dt_hrs,
             "reason": np.random.choice(["Hydraulic Hose Burst", "Engine Overheating", "Track Chain Wear", "Electrical Sensor Fault", "Conveyor Belt Tear"]),
-            "category": "Unplanned Maintenance"
+            "category": "Unplanned Maintenance",
+            "failure_component": eq_affected.get("critical_component", "Hydraulics"),
+            "engine_hours_at_failure": eq_affected.get("engine_hours", 4500.0) + d * 12.0,
+            "hours_since_last_maintenance": round(150.0 + dt_hrs * 10, 1),
+            "ambient_temp": temp_c,
+            "rainfall_3d_sum": rainfall
         })
         downtime_id_cnt += 1
         
     downtime_hours = round(max(0.0, (100.0 - eq_avail_pct) * 0.16), 1)
     
-    # Rain impact on production (flooding, slippery haul roads)
-    rain_delay_factor = max(0.0, (rainfall - 15.0) * 0.02)
-    
-    # Blasting delay
+    # Blasting delay every 3 days
     blasting_delay = 0.0
-    if d % 3 == 0: # Blast every 3 days
-        blasting_delay = round(np.random.uniform(0.5, 2.0), 1)
+    if d % 3 == 0:
+        blasting_delay = round(np.random.uniform(0.5, 1.8), 1)
         blasting_events.append({
             "id": f"BLST-{blast_id_cnt:04d}",
             "mine_id": "MINE-001",
@@ -353,12 +408,21 @@ for d in range(365):
         })
         blast_id_cnt += 1
         
-    operating_hours = max(4.0, round(16.0 - downtime_hours - rain_delay_factor * 8.0 - blasting_delay, 1))
+    # DOCUMENTED CAUSAL PHYSICS RULES:
+    # 1. Rainfall above 10 mm causes slippery haul roads and speed reduction
+    rain_speed_penalty = max(0.0, min(0.50, (rainfall - 10.0) * 0.015)) if rainfall > 10.0 else 0.0
     
-    # Actual production derived with realistic correlation
-    capacity_rate = 160.0 # Tonnes per operating hour
-    actual_tonnes = round(min(target_tonnes * 1.15, operating_hours * capacity_rate * (eq_avail_pct / 95.0) + np.random.normal(0, 75)), 1)
-    actual_tonnes = max(200.0, actual_tonnes)
+    # 2. Net operating hours reduced by downtime, blasting delays, and rain dewatering
+    rain_operating_delay = min(4.0, (rainfall / 20.0) * 1.5) if rainfall > 15.0 else 0.0
+    operating_hours = max(4.0, round(16.0 - downtime_hours - blasting_delay - rain_operating_delay, 1))
+    
+    # 3. Fleet throughput rate adjusted for haul road friction penalty
+    base_throughput = 160.0 # Nominal t/hr
+    effective_throughput = base_throughput * (1.0 - rain_speed_penalty)
+    
+    # 4. Actual production tonnage
+    actual_tonnes = round(operating_hours * effective_throughput * (eq_avail_pct / 95.0) + np.random.normal(0, 45), 1)
+    actual_tonnes = max(300.0, min(target_tonnes * 1.15, actual_tonnes))
     
     prod_records.append({
         "id": f"PROD-{d+1:04d}",
@@ -370,8 +434,13 @@ for d in range(365):
         "downtime_hours": downtime_hours,
         "equipment_availability_pct": eq_avail_pct,
         "rainfall_mm": rainfall,
-        "blasting_delay_hours": blasting_delay
+        "blasting_delay_hours": blasting_delay,
+        "manpower": 25,
+        "energy_consumption_kwh": round(2200.0 + operating_hours * 80.0, 1),
+        "is_synthetic": True,
+        "provenance_source": "causal_synthetic_with_real_weather"
     })
+
 
 df_prod = pd.DataFrame(prod_records)
 df_prod.to_csv(os.path.join(DATA_DEMO_DIR, 'production_records.csv'), index=False)
@@ -403,9 +472,16 @@ for m in range(12):
 df_targets = pd.DataFrame(monthly_targets)
 df_targets.to_csv(os.path.join(DATA_DEMO_DIR, 'production_targets.csv'), index=False)
 
-# 9. Mineral Prospectivity GeoJSON Grid (20x20 fine blocks)
-prospectivity_features = []
+# 9. Surface Exploration Priority GeoJSON Grid (15x15 exploration planning blocks)
+# NON-NEGOTIABLE DESIGN RULE:
+# This grid does NOT detect subterranean manganese ore bodies.
+# It ranks surface exploration priority to guide WHERE TO DRILL NEXT based on structural fault proximity
+# and borehole coverage gaps.
+exploration_features = []
 grid_n = 15
+
+# Collect all borehole coordinates to compute exact coverage gaps
+bh_coords = [(b["latitude"], b["longitude"]) for b in boreholes]
 
 for gx in range(grid_n):
     for gy in range(grid_n):
@@ -419,38 +495,58 @@ for gx in range(grid_n):
         
         # Spatial physics: distance to central manganese strike belt line
         dist_to_fault = abs(cy - (mine_lat + 0.8*(cx - mine_lon)))
+        dist_to_fault_km = round(dist_to_fault * 111.0, 2)
         
-        # Prospectivity score calculation
-        score = max(0.02, min(0.98, 1.0 - (dist_to_fault / 0.015) + np.random.normal(0, 0.08)))
-        score = round(score, 3)
+        # Compute exact drill coverage gap (distance in meters to nearest borehole)
+        cos_lat = math.cos(math.radians(cy))
+        min_gap_m = min(
+            math.sqrt(((cx - blon) * 111320.0 * cos_lat)**2 + ((cy - blat) * 110540.0)**2)
+            for blat, blon in bh_coords
+        )
+        drill_gap_m = round(min_gap_m, 1)
         
-        if score > 0.70:
-            category = "High"
-            is_pos_label = 1
-        elif score > 0.40:
-            category = "Medium"
-            is_pos_label = 1 if np.random.rand() > 0.5 else 0
-        elif score > 0.20:
-            category = "Low"
-            is_pos_label = 0
+        # Prioritization: High when close to structural lineament AND has a large drill gap (untested zone)
+        struct_weight = max(0.05, min(0.98, 1.0 - (dist_to_fault / 0.018)))
+        gap_weight = min(1.0, drill_gap_m / 400.0)
+        priority_score = round(0.55 * struct_weight + 0.45 * gap_weight, 3)
+        
+        if drill_gap_m > 300.0:
+            gap_cat = "High Gap (>300m - Priority Info Gain)"
+        elif drill_gap_m > 150.0:
+            gap_cat = "Moderate Gap (150-300m)"
         else:
-            category = "Insufficient evidence"
-            is_pos_label = 0
+            gap_cat = "Well Drilled (<150m)"
             
-        prospectivity_features.append({
+        if priority_score >= 0.70:
+            p_cat = "High Priority Drilling"
+            is_pos = 1
+        elif priority_score >= 0.45:
+            p_cat = "Medium Priority"
+            is_pos = 1 if priority_score > 0.55 else 0
+        elif priority_score >= 0.25:
+            p_cat = "Low Priority"
+            is_pos = 0
+        else:
+            p_cat = "Adequately Explored"
+            is_pos = 0
+            
+        exploration_features.append({
             "type": "Feature",
             "properties": {
                 "block_id": f"PBLK-{gx:02d}-{gy:02d}",
                 "mine_id": "MINE-001",
                 "center_lat": cy,
                 "center_lon": cx,
-                "dist_to_fault_km": round(dist_to_fault * 111.0, 2),
-                "ndvi": round(0.4 + 0.2 * np.random.rand(), 2),
-                "lst_c": round(30.0 + 5.0 * np.random.rand(), 1),
-                "sar_coherence": round(0.6 + 0.3 * np.random.rand(), 2),
-                "prospectivity_score": score,
-                "prospectivity_category": category,
-                "synthetic_training_label": is_pos_label
+                "dist_to_fault_km": dist_to_fault_km,
+                "drill_coverage_gap_m": drill_gap_m,
+                "drill_gap_category": gap_cat,
+                "exploration_priority_score": priority_score,
+                "exploration_priority_category": p_cat,
+                "prospectivity_score": priority_score, # Backwards compatibility alias
+                "prospectivity_category": p_cat,       # Backwards compatibility alias
+                "accessibility_score": round(0.85 + 0.1 * np.random.rand(), 2),
+                "data_source": "synthetic",
+                "disclaimer": "Guides where to drill next. Does not indicate ore at depth. Subsurface reserves require borehole drilling and assay geostatistics."
             },
             "geometry": {
                 "type": "Polygon",
@@ -464,11 +560,13 @@ for gx in range(grid_n):
             }
         })
 
-prospectivity_geojson = {
+exploration_geojson = {
     "type": "FeatureCollection",
-    "features": prospectivity_features
+    "disclaimer": "Surface Exploration Priority Map: Guides where to drill next based on structural fault proximity and borehole coverage gaps. Does not indicate ore at depth.",
+    "features": exploration_features
 }
 with open(os.path.join(DATA_DEMO_DIR, 'prospectivity_grid.geojson'), 'w') as f:
-    json.dump(prospectivity_geojson, f, indent=2)
+    json.dump(exploration_geojson, f, indent=2)
 
-print("Demo data generation complete! All CSV and GeoJSON files written successfully.")
+print("Surface exploration priority grid generated successfully with drillhole coverage gaps.")
+

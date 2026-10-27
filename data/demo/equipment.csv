@@ -1,8 +1,8 @@
-id,mine_id,name,equipment_type,status,capacity_tph
-EQ-01,MINE-001,Excavator CAT 390F #1,Excavator,Operational,350.0
-EQ-02,MINE-001,Excavator Komatsu PC1250 #2,Excavator,Operational,400.0
-EQ-03,MINE-001,Haul Truck Volvo A45G #1,Haul Truck,Operational,180.0
-EQ-04,MINE-001,Haul Truck Volvo A45G #2,Haul Truck,Operational,180.0
-EQ-05,MINE-001,Haul Truck CAT 775G #3,Haul Truck,Operational,220.0
-EQ-06,MINE-001,Drill Rig Sandvik DR412i #1,Drill Rig,Operational,120.0
-EQ-07,MINE-001,Primary Jaw Crusher #1,Crusher,Operational,600.0
+id,mine_id,name,equipment_type,status,capacity_tph,engine_hours,hours_since_last_maintenance,past_failure_count_90d,average_load_pct,health_score,failure_risk_24h,failure_risk_48h,failure_risk_72h,critical_component
+EQ-01,MINE-001,Excavator CAT 390F #1,Excavator,Operational,350.0,6840.0,185.0,2,86.0,88.0,0.09,0.16,0.24,Hydraulic Pump
+EQ-02,MINE-001,Excavator Komatsu PC1250 #2,Excavator,Warning,400.0,8920.0,242.0,4,92.0,68.0,0.28,0.42,0.58,Swing Motor & Hydraulics
+EQ-03,MINE-001,Haul Truck Volvo A45G #1,Haul Truck,Operational,180.0,4200.0,95.0,1,80.0,94.0,0.04,0.08,0.12,Transmission
+EQ-04,MINE-001,Haul Truck Volvo A45G #2,Haul Truck,Operational,180.0,5150.0,140.0,2,84.0,89.0,0.07,0.13,0.2,Suspension Struts
+EQ-05,MINE-001,Haul Truck CAT 775G #3,Haul Truck,Operational,220.0,3800.0,70.0,0,78.0,96.0,0.03,0.06,0.09,Braking System
+EQ-06,MINE-001,Drill Rig Sandvik DR412i #1,Drill Rig,Operational,120.0,3100.0,110.0,1,75.0,92.0,0.05,0.1,0.15,Compressor Unit
+EQ-07,MINE-001,Primary Jaw Crusher #1,Crusher,Operational,600.0,9400.0,160.0,2,88.0,85.0,0.08,0.15,0.22,Jaw Toggle Plate

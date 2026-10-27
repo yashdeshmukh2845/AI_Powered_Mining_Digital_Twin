@@ -1,1 +1,1 @@
-id,mine_id,name,equipment_type,status,capacity_tph
+id,mine_id,name,equipment_type,status,capacity_tph,engine_hours,hours_since_last_maintenance,past_failure_count_90d,average_load_pct,health_score,failure_risk_24h,failure_risk_48h,failure_risk_72h,critical_component

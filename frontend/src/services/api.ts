@@ -1,7 +1,9 @@
 import type {
   DashboardSummary, Mine, Borehole, OreBlock, ForecastItem,
   ExplanationResponse, Recommendation, SimulationRequestParams,
-  SimulationResult, SavedScenario, ReserveEstimate, ModelStatus, DataImportRecord
+  SimulationResult, SavedScenario, ReserveEstimate, ModelStatus, DataImportRecord,
+  EquipmentRiskResponse, AblationStudyResult, BlockModelResponse, BlockModelBlock,
+  VariogramResponse, DispatchOptimizationResult, BlastingScheduleResult
 } from '../types';
 
 const API_BASE = '/api';
@@ -19,11 +21,25 @@ export const api = {
   // Dashboard & Mines
   getHealth: () => fetchJson<{ status: string; app: string; demo_mode: boolean }>('/health'),
   getDashboardSummary: (mineId = 'MINE-001') => fetchJson<DashboardSummary>(`/dashboard/summary?mine_id=${mineId}`),
+  getAlerts: (mineId = 'MINE-001') => fetchJson<any[]>(`/alerts?mine_id=${mineId}`),
   getMines: () => fetchJson<Mine[]>('/mines'),
   getBlocks: (mineId = 'MINE-001') => fetchJson<OreBlock[]>(`/blocks?mine_id=${mineId}`),
   getBoreholes: (mineId = 'MINE-001') => fetchJson<Borehole[]>(`/boreholes?mine_id=${mineId}`),
   getGeologyLayers: (mineId = 'MINE-001') => fetchJson<any>(`/geology/layers?mine_id=${mineId}`),
   getProspectivityMap: () => fetchJson<any>('/prospectivity/map'),
+
+  // Equipment Fleet Health & Failure Risk Engine (Phase 2)
+  getEquipment: (mineId = 'MINE-001') => fetchJson<any[]>(`/equipment?mine_id=${mineId}`),
+  getEquipmentRisks: (mineId = 'MINE-001') => fetchJson<EquipmentRiskResponse>(`/equipment/risk?mine_id=${mineId}`),
+
+  // Space & Weather Empirical Ablation Study (Phase 4)
+  getAblationStudy: () => fetchJson<AblationStudyResult>('/models/ablation'),
+
+  // 3D Geostatistical Block Model & JORC/UNFC Resource Estimation (Phase 5)
+  getBlockModel: () => fetchJson<BlockModelResponse>('/reserves/block-model'),
+  getBlockModelSlice: (elevation = 300.0) => fetchJson<BlockModelBlock[]>(`/reserves/block-model/slice?elevation=${elevation}`),
+  getBlockModelCrossSection: (yCoord = 0.0, tolerance = 35.0) => fetchJson<BlockModelBlock[]>(`/reserves/block-model/cross-section?y_coord=${yCoord}&tolerance=${tolerance}`),
+  getVariogram: (variable = 'mn_grade') => fetchJson<VariogramResponse>(`/reserves/variogram?variable=${variable}`),
 
   // Reserves & Forecasting
   estimateReserves: (mineId = 'MINE-001', bulkDensity = 3.4, cutoffGrade = 15.0) =>
@@ -39,6 +55,20 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ mine_id: mineId, forecast_horizon_days: horizonDays })
     }),
+
+  // Operations Research & Optimization Engine (Phase 6)
+  optimizeDispatch: (params: { target_tonnes?: number; forecast_rain_mm?: number; blend_target_mn_pct?: number; mine_id?: string } = {}) =>
+    fetchJson<DispatchOptimizationResult>('/optimizer/dispatch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        target_tonnes: params.target_tonnes ?? 2500.0,
+        forecast_rain_mm: params.forecast_rain_mm ?? 0.0,
+        blend_target_mn_pct: params.blend_target_mn_pct ?? 30.0,
+        mine_id: params.mine_id ?? 'MINE-001'
+      })
+    }),
+  getBlastingWindow: (mineId = 'MINE-001') => fetchJson<BlastingScheduleResult>(`/optimizer/blasting?mine_id=${mineId}`),
 
   // Risk & Explainability & AI Actions
   analyzeRisk: (target: number, forecast: number) =>

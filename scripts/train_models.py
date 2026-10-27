@@ -6,8 +6,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import pandas as pd
 from backend.app.ml.prospectivity_model import ProspectivityModel
 from backend.app.ml.production_model import ProductionModel
-from backend.app.ml.eurosat_classifier import EuroSATClassifier
 from backend.app.database.db import SessionLocal
+
 from backend.app.database.models import ProductionRecord
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -40,21 +40,36 @@ def train_all_models():
             print("  Production Forecasting Model Metrics:")
             for k, v in prod_metrics.items():
                 print(f"    {k}: {v}")
+
+            # Also train Quantile Regressors (P10, P50, P90)
+            from backend.app.ml.production_forecast_engine import ProductionForecastEngine
+            df_feat = ProductionForecastEngine.build_feature_table(records)
+            q_engine = ProductionForecastEngine()
+            q_metrics = q_engine.train_models(df_feat)
+            print("  Quantile Uncertainty Model (P10/P50/P90) Metrics:")
+            for k, v in q_metrics.items():
+                print(f"    {k}: {v}")
         else:
             print("  No production records found in database.")
     finally:
+
         db.close()
         
-    # 2. EuroSAT Land-Cover Classifier
-    print("\n2. Training EuroSAT Land-Cover Classifier (Sentinel-2 10-Class Optical Imagery)...")
+    # 2. Equipment Failure Risk Model (Calibrated Time-Series Classifier)
+    print("\n2. Training Equipment Failure & Breakdown Risk Model (24h/48h/72h Horizons)...")
+    db_eq = SessionLocal()
     try:
-        euro_clf = EuroSATClassifier()
-        euro_metrics = euro_clf.train_on_samples(samples_per_class=50)
-        print("  EuroSAT Land-Cover Classifier Metrics:")
-        for k, v in euro_metrics.items():
+        from backend.app.ml.equipment_failure_model import EquipmentFailureModel
+        eq_model = EquipmentFailureModel()
+        eq_metrics = eq_model.train(db_eq)
+        print("  Equipment Failure Risk Model Metrics:")
+        for k, v in eq_metrics.items():
             print(f"    {k}: {v}")
     except Exception as e:
-        print(f"  EuroSAT training notice: {e}")
+        print(f"  Equipment model training notice: {e}")
+    finally:
+        db_eq.close()
+
         
     # 3. Prospectivity Exploration Model
     print("\n3. Training Geological Prospectivity Model...")

@@ -1,1 +1,1 @@
-id,equipment_id,start_time,end_time,downtime_hours,reason,category
+id,equipment_id,start_time,end_time,downtime_hours,reason,category,failure_component,engine_hours_at_failure,hours_since_last_maintenance,ambient_temp,rainfall_3d_sum

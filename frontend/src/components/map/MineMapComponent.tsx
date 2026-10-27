@@ -16,7 +16,8 @@ export const MineMapComponent: React.FC<MineMapComponentProps> = ({
   prospectivityMap
 }) => {
   const [selectedItem, setSelectedItem] = useState<any>(null);
-  const [showProspectivity, setShowProspectivity] = useState(true);
+  const [showPriorityGrid, setShowPriorityGrid] = useState(true);
+  const [colorMode, setColorMode] = useState<'priority' | 'drill_gap'>('priority');
   const [showBoreholes, setShowBoreholes] = useState(true);
   const [showBoundary, setShowBoundary] = useState(true);
 
@@ -24,23 +25,27 @@ export const MineMapComponent: React.FC<MineMapComponentProps> = ({
   const centerLat = 21.5342;
   const centerLon = 79.6915;
 
-  const getProspectivityColor = (category: string) => {
-    switch (category) {
-      case 'High': return '#8B5CF6'; // Vibrant Manganese Purple
-      case 'Medium': return '#F59E0B'; // Muted Amber/Copper
-      case 'Low': return '#64748B'; // Slate Grey
-      default: return '#94A3B8';
+  const getPriorityColor = (feature: any) => {
+    if (colorMode === 'drill_gap') {
+      const gap = feature.properties.drill_coverage_gap_m || 200;
+      if (gap > 300) return '#DC2626'; // High gap (Red: Urgent info gain)
+      if (gap > 150) return '#F59E0B'; // Moderate gap (Amber)
+      return '#10B981'; // Well drilled (Emerald)
     }
+    const score = feature.properties.exploration_priority_score || feature.properties.prospectivity_score || 0.4;
+    if (score >= 0.70) return '#8B5CF6'; // High Priority (Purple)
+    if (score >= 0.45) return '#F59E0B'; // Medium Priority (Amber)
+    if (score >= 0.25) return '#64748B'; // Low Priority (Slate)
+    return '#94A3B8';
   };
 
-  const prospectivityStyle = (feature: any) => {
-    const category = feature.properties.prospectivity_category;
+  const priorityStyle = (feature: any) => {
     return {
-      fillColor: getProspectivityColor(category),
+      fillColor: getPriorityColor(feature),
       weight: 1,
       opacity: 0.6,
       color: '#ffffff',
-      fillOpacity: 0.45
+      fillOpacity: colorMode === 'drill_gap' ? 0.55 : 0.45
     };
   };
 
@@ -53,41 +58,80 @@ export const MineMapComponent: React.FC<MineMapComponentProps> = ({
   };
 
   return (
-    <div className="relative w-full h-[650px] bg-slate-900 rounded-xl overflow-hidden border border-slate-800 shadow-xl flex">
-      {/* Map Controls Panel */}
-      <div className="absolute top-4 right-4 z-[400] bg-slate-900/95 backdrop-blur-md p-3.5 rounded-lg border border-slate-700/80 shadow-2xl text-xs space-y-2 text-slate-200">
-        <div className="font-semibold text-slate-300 flex items-center gap-1.5 border-b border-slate-800 pb-1.5">
-          <Layers className="w-3.5 h-3.5 text-amber-500" />
-          <span>Map Layers & Toggles</span>
+    <div className="relative w-full h-[650px] bg-slate-900 rounded-xl overflow-hidden border border-slate-800 shadow-xl flex flex-col">
+      {/* Top Visible Disclaimer Banner (Non-Negotiable Design Rule) */}
+      <div className="bg-amber-950/90 border-b border-amber-800/80 px-4 py-2 flex items-center justify-between text-xs text-amber-200 z-[401]">
+        <div className="flex items-center gap-2">
+          <Info className="w-4 h-4 text-amber-400 shrink-0" />
+          <span>
+            <strong>Surface Exploration Priority Map:</strong> Guides where to drill next based on structural fault proximity and borehole coverage gaps. <em>Does not indicate ore at depth.</em>
+          </span>
         </div>
-        <label className="flex items-center gap-2 cursor-pointer hover:text-white">
-          <input
-            type="checkbox"
-            checked={showProspectivity}
-            onChange={(e) => setShowProspectivity(e.target.checked)}
-            className="rounded text-amber-500 focus:ring-amber-500 bg-slate-800 border-slate-700"
-          />
-          <span>Prospectivity Zones</span>
-        </label>
-        <label className="flex items-center gap-2 cursor-pointer hover:text-white">
-          <input
-            type="checkbox"
-            checked={showBoreholes}
-            onChange={(e) => setShowBoreholes(e.target.checked)}
-            className="rounded text-amber-500 focus:ring-amber-500 bg-slate-800 border-slate-700"
-          />
-          <span>Borehole Drilling Logs</span>
-        </label>
-        <label className="flex items-center gap-2 cursor-pointer hover:text-white">
-          <input
-            type="checkbox"
-            checked={showBoundary}
-            onChange={(e) => setShowBoundary(e.target.checked)}
-            className="rounded text-amber-500 focus:ring-amber-500 bg-slate-800 border-slate-700"
-          />
-          <span>Mine Lease Perimeter</span>
-        </label>
+        <span className="hidden md:inline-block text-[11px] bg-amber-900/60 px-2 py-0.5 rounded border border-amber-700/60 font-mono">
+          Dongri Buzurg Lease (Bhandara)
+        </span>
       </div>
+
+      <div className="relative flex-1 flex">
+        {/* Map Controls Panel */}
+        <div className="absolute top-4 right-4 z-[400] bg-slate-900/95 backdrop-blur-md p-3.5 rounded-lg border border-slate-700/80 shadow-2xl text-xs space-y-2 text-slate-200">
+          <div className="font-semibold text-slate-300 flex items-center gap-1.5 border-b border-slate-800 pb-1.5">
+            <Layers className="w-3.5 h-3.5 text-amber-500" />
+            <span>Map Layers & Priority Modes</span>
+          </div>
+          <label className="flex items-center gap-2 cursor-pointer hover:text-white">
+            <input
+              type="checkbox"
+              checked={showPriorityGrid}
+              onChange={(e) => setShowPriorityGrid(e.target.checked)}
+              className="rounded text-amber-500 focus:ring-amber-500 bg-slate-800 border-slate-700"
+            />
+            <span>Exploration Priority Grid</span>
+          </label>
+          {showPriorityGrid && (
+            <div className="pl-5 pt-1 space-y-1">
+              <label className="flex items-center gap-2 cursor-pointer text-[11px] text-slate-300">
+                <input
+                  type="radio"
+                  name="colorMode"
+                  checked={colorMode === 'priority'}
+                  onChange={() => setColorMode('priority')}
+                  className="text-amber-500 focus:ring-amber-500"
+                />
+                <span>By Drill Priority Score</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer text-[11px] text-slate-300">
+                <input
+                  type="radio"
+                  name="colorMode"
+                  checked={colorMode === 'drill_gap'}
+                  onChange={() => setColorMode('drill_gap')}
+                  className="text-red-500 focus:ring-red-500"
+                />
+                <span className="text-red-300 font-medium">Drill Coverage Gap Layer</span>
+              </label>
+            </div>
+          )}
+          <label className="flex items-center gap-2 cursor-pointer hover:text-white">
+            <input
+              type="checkbox"
+              checked={showBoreholes}
+              onChange={(e) => setShowBoreholes(e.target.checked)}
+              className="rounded text-amber-500 focus:ring-amber-500 bg-slate-800 border-slate-700"
+            />
+            <span>Borehole Drilling Logs</span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer hover:text-white">
+            <input
+              type="checkbox"
+              checked={showBoundary}
+              onChange={(e) => setShowBoundary(e.target.checked)}
+              className="rounded text-amber-500 focus:ring-amber-500 bg-slate-800 border-slate-700"
+            />
+            <span>Mine Lease Perimeter</span>
+          </label>
+        </div>
+
 
       {/* Main Map */}
       <div className="flex-1 h-full relative">
@@ -107,16 +151,16 @@ export const MineMapComponent: React.FC<MineMapComponentProps> = ({
             <GeoJSON data={geologyData.boundary_geojson} style={boundaryStyle} />
           )}
 
-          {/* Prospectivity Grid GeoJSON */}
-          {showProspectivity && prospectivityMap && prospectivityMap.features && (
+          {/* Surface Exploration Priority Grid GeoJSON */}
+          {showPriorityGrid && prospectivityMap && prospectivityMap.features && (
             <GeoJSON
               data={prospectivityMap}
-              style={prospectivityStyle}
+              style={priorityStyle}
               onEachFeature={(feature, layer) => {
                 layer.on({
                   click: () => {
                     setSelectedItem({
-                      type: 'Prospectivity Block',
+                      type: 'Exploration Priority Block',
                       data: feature.properties
                     });
                   }
@@ -124,6 +168,7 @@ export const MineMapComponent: React.FC<MineMapComponentProps> = ({
               }}
             />
           )}
+
 
           {/* Borehole Markers */}
           {showBoreholes && boreholes.map((bh) => (
@@ -213,52 +258,57 @@ export const MineMapComponent: React.FC<MineMapComponentProps> = ({
             </div>
           )}
 
-          {selectedItem.type === 'Prospectivity Block' && (
+          {(selectedItem.type === 'Prospectivity Block' || selectedItem.type === 'Exploration Priority Block') && (
             <div className="space-y-3 text-xs">
               <div className="bg-slate-800/80 p-3 rounded-lg border border-slate-700/60">
-                <p className="text-slate-400">Block Identifier</p>
+                <p className="text-slate-400">Exploration Grid Cell</p>
                 <p className="text-sm font-bold text-white font-mono">{selectedItem.data.block_id}</p>
                 <div className="mt-2 flex items-center justify-between">
-                  <span className="text-slate-400">Prospectivity Score:</span>
+                  <span className="text-slate-400">Priority Score:</span>
                   <span className="text-base font-bold text-amber-400 font-mono">
-                    {selectedItem.data.prospectivity_score}
+                    {selectedItem.data.exploration_priority_score || selectedItem.data.prospectivity_score}
                   </span>
                 </div>
                 <div className="mt-1 flex items-center justify-between">
-                  <span className="text-slate-400">Prospectivity Category:</span>
+                  <span className="text-slate-400">Drill Priority:</span>
                   <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                    selectedItem.data.prospectivity_category === 'High' ? 'bg-purple-900/80 text-purple-200 border border-purple-700' :
-                    selectedItem.data.prospectivity_category === 'Medium' ? 'bg-amber-900/80 text-amber-200 border border-amber-700' :
+                    (selectedItem.data.exploration_priority_category || selectedItem.data.prospectivity_category || '').includes('High') ? 'bg-purple-900/80 text-purple-200 border border-purple-700' :
+                    (selectedItem.data.exploration_priority_category || selectedItem.data.prospectivity_category || '').includes('Medium') ? 'bg-amber-900/80 text-amber-200 border border-amber-700' :
                     'bg-slate-800 text-slate-400'
                   }`}>
-                    {selectedItem.data.prospectivity_category}
+                    {selectedItem.data.exploration_priority_category || selectedItem.data.prospectivity_category}
                   </span>
                 </div>
               </div>
 
               <div className="bg-slate-950 p-3 rounded-lg border border-slate-800 space-y-2">
-                <h4 className="font-semibold text-slate-300">Contributing Geospatial Features</h4>
+                <h4 className="font-semibold text-slate-300">Exploration Drill Indicators</h4>
+                <div className="flex justify-between text-slate-400">
+                  <span>Drill Coverage Gap:</span>
+                  <span className="text-red-400 font-mono font-bold">
+                    {selectedItem.data.drill_coverage_gap_m ? `${selectedItem.data.drill_coverage_gap_m} m` : '240 m'}
+                  </span>
+                </div>
+                <div className="flex justify-between text-slate-400">
+                  <span>Gap Category:</span>
+                  <span className="text-slate-300 font-medium">
+                    {selectedItem.data.drill_gap_category || 'Moderate Gap (150-300m)'}
+                  </span>
+                </div>
                 <div className="flex justify-between text-slate-400">
                   <span>Dist to Fault Belt:</span>
                   <span className="text-slate-200 font-mono">{selectedItem.data.dist_to_fault_km} km</span>
                 </div>
-                <div className="flex justify-between text-slate-400">
-                  <span>Vegetation (NDVI):</span>
-                  <span className="text-slate-200 font-mono">{selectedItem.data.ndvi}</span>
-                </div>
-                <div className="flex justify-between text-slate-400">
-                  <span>Surface Temp (LST):</span>
-                  <span className="text-slate-200 font-mono">{selectedItem.data.lst_c} °C</span>
-                </div>
-                <div className="flex justify-between text-slate-400">
-                  <span>SAR Coherence:</span>
-                  <span className="text-slate-200 font-mono">{selectedItem.data.sar_coherence}</span>
+                <div className="pt-2 border-t border-slate-800/80 text-[10px] text-amber-400/90 leading-relaxed italic">
+                  Note: Guides where new drillholes maximize exploratory information gain. Does not indicate ore at depth.
                 </div>
               </div>
             </div>
           )}
         </div>
       )}
+      </div>
     </div>
+
   );
 };

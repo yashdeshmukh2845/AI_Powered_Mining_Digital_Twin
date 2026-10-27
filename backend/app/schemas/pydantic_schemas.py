@@ -59,6 +59,10 @@ class DashboardSummary(BaseModel):
     shortfall_risk_category: str
     equipment_availability_pct: float
     num_high_prospectivity_blocks: int
+    data_source: str = "synthetic"
+    disclaimer: Optional[str] = "Demo data - replace via the Data Ingestion pipeline with MOIL data. Subsurface reserves require borehole drilling and assay geostatistics."
+    illustrative_target_note: Optional[str] = "Illustrative benchmark daily target (2,500 t/day) unless calibrated with official MOIL operational quota"
+    drill_gap_high_blocks: Optional[int] = 0
     demo_mode: bool = True
     last_updated: str
 
@@ -141,3 +145,32 @@ class SatellitePreviewItem(BaseModel):
     confidence: Optional[float] = None
     source_dataset: str = "EuroSAT_RGB"
     image_url: Optional[str] = None
+
+class EquipmentRiskItem(BaseModel):
+    id: str
+    name: str
+    equipment_type: str
+    status: str
+    capacity_tph: float
+    engine_hours: float
+    hours_since_last_maintenance: float
+    past_failure_count_90d: int
+    average_load_pct: float
+    health_score: float
+    failure_risk_24h: float
+    failure_risk_48h: float
+    failure_risk_72h: float
+    critical_component: str
+    top_risk_factors: List[str] = []
+    recommended_action: str
+    expected_downtime_hours_next_7d: float
+
+class EquipmentRiskResponse(BaseModel):
+    mine_id: str
+    fleet_count: int
+    high_risk_count: int
+    fleet_health_score_avg: float
+    expected_total_downtime_hours_next_7d: float
+    evaluation_metrics: Dict[str, Any] = {}
+    equipment: List[EquipmentRiskItem]
+

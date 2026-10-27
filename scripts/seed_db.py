@@ -57,61 +57,67 @@ def init_and_seed_db():
             for _, row in df.iterrows():
                 db.add(BoreholeInterval(**row.to_dict()))
                 
+        def safe_add(model_cls, row_dict):
+            cols = {c.name for c in model_cls.__table__.columns}
+            filtered = {k: v for k, v in row_dict.items() if k in cols and pd.notna(v)}
+            db.add(model_cls(**filtered))
+
         # 6. Assay Samples
         ass_file = os.path.join(DATA_DEMO_DIR, 'assay_samples.csv')
         if os.path.exists(ass_file):
             df = pd.read_csv(ass_file)
             for _, row in df.iterrows():
-                db.add(AssaySample(**row.to_dict()))
+                safe_add(AssaySample, row.to_dict())
                 
         # 7. Ore Blocks
         blk_file = os.path.join(DATA_DEMO_DIR, 'ore_blocks.csv')
         if os.path.exists(blk_file):
             df = pd.read_csv(blk_file)
             for _, row in df.iterrows():
-                db.add(OreBlock(**row.to_dict()))
+                safe_add(OreBlock, row.to_dict())
                 
         # 8. Equipment
         eq_file = os.path.join(DATA_DEMO_DIR, 'equipment.csv')
         if os.path.exists(eq_file):
             df = pd.read_csv(eq_file)
             for _, row in df.iterrows():
-                db.add(Equipment(**row.to_dict()))
+                safe_add(Equipment, row.to_dict())
                 
         # 9. Production Records
         prod_file = os.path.join(DATA_DEMO_DIR, 'production_records.csv')
         if os.path.exists(prod_file):
             df = pd.read_csv(prod_file)
             for _, row in df.iterrows():
-                db.add(ProductionRecord(**row.to_dict()))
+                safe_add(ProductionRecord, row.to_dict())
                 
         # 10. Environmental Observations
         env_file = os.path.join(DATA_DEMO_DIR, 'environmental_observations.csv')
         if os.path.exists(env_file):
             df = pd.read_csv(env_file)
             for _, row in df.iterrows():
-                db.add(EnvironmentalObservation(**row.to_dict()))
+                safe_add(EnvironmentalObservation, row.to_dict())
                 
         # 11. Equipment Downtime
         dt_file = os.path.join(DATA_DEMO_DIR, 'equipment_downtime.csv')
         if os.path.exists(dt_file):
             df = pd.read_csv(dt_file)
             for _, row in df.iterrows():
-                db.add(EquipmentDowntime(**row.to_dict()))
+                safe_add(EquipmentDowntime, row.to_dict())
                 
         # 12. Blasting Events
         blst_file = os.path.join(DATA_DEMO_DIR, 'blasting_events.csv')
         if os.path.exists(blst_file):
             df = pd.read_csv(blst_file)
             for _, row in df.iterrows():
-                db.add(BlastingEvent(**row.to_dict()))
+                safe_add(BlastingEvent, row.to_dict())
                 
         # 13. Production Targets
         tgt_file = os.path.join(DATA_DEMO_DIR, 'production_targets.csv')
         if os.path.exists(tgt_file):
             df = pd.read_csv(tgt_file)
             for _, row in df.iterrows():
-                db.add(ProductionTarget(**row.to_dict()))
+                safe_add(ProductionTarget, row.to_dict())
+
                 
         db.commit()
         print("Database seeded successfully with all synthetic demo records!")

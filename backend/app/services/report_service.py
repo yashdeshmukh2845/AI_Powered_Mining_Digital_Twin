@@ -50,17 +50,19 @@ class ReportService:
         else:
             writer.writerow(["mining_production_cleaned", "mining_production_cleaned.csv", "Manganese Operations", "5000/5000", "imported_operational_data", "Active"])
             writer.writerow(["weather_open_meteo", "open-meteo-21.20N79.10E293m.csv", "Meteorological Grid", "2192/2192", "observed_grid_data", "Active"])
-            writer.writerow(["orebit_geology_nikel", "orebit-datasets-main/02-nikel-laterit/", "Nickel Laterite", "9994/9994", "benchmark_exploration", "Active"])
-            writer.writerow(["eurosat_rgb_imagery", "EuroSAT_RGB/", "Sentinel-2 Land Cover", "27000/27000", "observed_satellite", "Active"])
+            writer.writerow(["orebit_geology_nikel", "orebit-datasets-main/02-nikel-laterit/", "Exploration Benchmark", "9994/9994", "benchmark_exploration", "Active"])
+            writer.writerow(["surface_change_sentinel", "Sentinel-2 Multi-temporal", "Surface Environmental Context", "365/365", "observed_satellite", "Active"])
         writer.writerow([])
 
-        writer.writerow(["3. SCIENTIFIC LIMITATIONS & DISCLAIMERS"])
-        writer.writerow(["- Orebit Exploration Data: Preserved as Nickel Laterite (% Ni). Does not represent official MOIL Dongri Buzurg manganese reserves."])
-        writer.writerow(["- Weather Grid: Open-Meteo observations taken at 21.195N, 79.105E (~60km SW of Dongri Buzurg pit center)."])
-        writer.writerow(["- Satellite Land-Cover: EuroSAT optical RGB identifies surface land cover. It cannot detect subsurface manganese deposits."])
-        writer.writerow(["- Anti-Double Counting: Monthly production summary is verified as derived aggregate and not combined with shift-level data."])
+        writer.writerow(["3. SCIENTIFIC LIMITATIONS & DISCLAIMERS (THE SUBSURFACE TRAP)"])
+        writer.writerow(["- Subsurface Rule: Satellite data (NDVI, LST, SAR, rainfall) NEVER directly detects underground manganese ore."])
+        writer.writerow(["- Reserve Estimation: Strictly derived from borehole drill logs, core assays, and geostatistical block kriging."])
+        writer.writerow(["- Exploration Map: Surface exploration priority guides where to drill next based on structural fault proximity and drill coverage gaps."])
+        writer.writerow(["- Production Target: 2,500 t/day represents an illustrative benchmark target unless calibrated with official MOIL operational quotas."])
+        writer.writerow(["- Demo Data: Demo datasets must be replaced via the Data Ingestion pipeline with MOIL proprietary data."])
         
         return output.getvalue()
+
 
     @staticmethod
     def generate_pdf_report(summary_data: Dict[str, Any], filepath: str, provenance_list: List[Dict[str, Any]] = None) -> str:
@@ -111,12 +113,15 @@ class ReportService:
             story.append(Spacer(1, 8))
             
             disclaimer_text = (
-                "<b>SCIENTIFIC & GEOLOGICAL AUDIT NOTICE:</b> Operational KPIs are driven by the 5,000 shift records from "
-                "<code>mining_production_cleaned.csv</code> and 6-year weather history from <code>open-meteo</code>. "
-                "Exploration drillholes are integrated from the Orebit Nickel Laterite benchmark dataset (% Ni) for geological pipeline validation "
-                "and are explicitly NOT official MOIL manganese reserves. Optical RGB EuroSAT data provides surface land cover classification only."
+                "<b>SCIENTIFIC DESIGN RULES & AUDIT NOTICE:</b><br/>"
+                "1. <b>Subsurface Trap Principle:</b> Satellite remote sensing (rainfall, NDVI, LST, SAR) provides surface environmental "
+                "context (weather disruption, haul-road friction, pit flooding risks) and exploration drill planning. Satellite data NEVER directly detects underground manganese ore.<br/>"
+                "2. <b>Reserve Estimation:</b> Mineral reserves are calculated strictly from borehole core logs, laboratory assays, and 3D geostatistics.<br/>"
+                "3. <b>Exploration Priority:</b> Surface exploration ranking identifies structural lineaments and borehole coverage gaps to optimize where to drill next.<br/>"
+                "4. <b>Operational Target:</b> 2,500 t/day represents an illustrative benchmark target unless calibrated with official MOIL quotas."
             )
             story.append(Paragraph(disclaimer_text, disclaimer_style))
+
             
             # Operational Table
             op_data = [
